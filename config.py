@@ -29,16 +29,6 @@ T_SLOW   = 2.5   # concept reveal
 T_MEDIUM = 1.2   # transitions
 T_FAST   = 0.45  # emphasis pulses
 
-VECTOR_COLOR = ManimColor("#FF6B6B")
-
-# ── LaTeX note ───────────────────────────────────────────────────────────────
-# Tất cả scenes dùng Text() thay MathTex() để tránh phụ thuộc LaTeX.
-# Nếu muốn dùng MathTex (đẹp hơn), cài:
-#   Windows : MiKTeX  https://miktex.org/download
-#   macOS   : MacTeX  https://www.tug.org/mactex/
-#   Linux   : sudo apt install texlive-full
-# Sau đó có thể thay Text(...) → MathTex(r"...") trong các scene files.
-
 # ── Helper: standard 3B1B-style glow stroke ──────────────────────────────────
 def glow_stroke(mob: VMobject, color=HIGHLIGHT_COLOR, width: float = 6) -> VMobject:
     """Add a thick, semi-transparent stroke on top of a mobject to simulate glow."""

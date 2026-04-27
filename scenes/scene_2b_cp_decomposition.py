@@ -1,13 +1,17 @@
 """
 scenes/scene_2b_cp_decomposition.py
-─────────────────────────────────────────────────────────────────────────────
-SCENE 2B  "CP Decomposition – Phép phân tách"  (2:10 – 3:20)
+SCENE 2B: CP Decomposition — The Resurrection from Fibers (2:10 – 3:20)
 
-- Tensor W tan thành sợi (vectors a, b, c)
-- Outer product animation a ∘ b ∘ c → rank-1 block
-- R bộ vectors → R rank-1 terms → cộng lại ≈ W
+Target runtime: ~70 seconds
+─────────────────────────────────────────────────────────────────────────────
+Phase A  (0 – 10s)  : Tensor W từ scene trước quay; câu hỏi "Có cách nào…"
+Phase B  (10 – 30s) : Khối "tan chảy" → 3 vector a, b, c (màu vàng/cam/đỏ nhạt)
+Phase C  (30 – 60s) : Outer-product animation: a⊗b → ma trận 2D, ⊗c → khối 3D;
+                       sau đó 5 bộ (a_r, b_r, c_r) mỗi màu khác nhau
+Phase D  (60 – 70s) : 5 khối nhỏ chồng lên nhau (+=), dấu ≈ W, công thức hoàn chỉnh
 ─────────────────────────────────────────────────────────────────────────────
 """
+
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -15,190 +19,327 @@ from manim import *
 from config import *
 from utils.tensor_objects import Tensor3D
 
+# ── Layout constants ──────────────────────────────────────────────────────────
+Y_TITLE =  3.30
+Y_SUB   =  2.65
+Y_BODY  =  0.10
+Y_NOTE  = -3.10
 
+X_LEFT  = -4.20
+X_MID   =  0.00
+X_RIGHT =  3.20
+
+def at(x, y):
+    return np.array([x, y, 0])
+
+def tex(s, size=30, color=WHITE):
+    return MathTex(s, font_size=size, color=color)
+
+def txt(s, size=28, color=WHITE):
+    return Text(s, font_size=size, color=color)
+
+# Colour palette for rank-1 terms (5 bộ)
+RANK_COLORS = [YELLOW, ORANGE, "#FF6B6B", TEAL_C, BLUE_C]
+
+# ── Helper: build a simple 3-D box with coloured faces using Polygon ──────────
+def make_box(nx, ny, nz, cx=0.22, fc=BLUE, ec=WHITE, opacity=0.75):
+    """Return a VGroup that looks like an isometric 3-D box of nx×ny×nz cells."""
+    # We'll draw the three visible faces of the box using parallelograms.
+    w  = nx * cx        # width  (x-axis on screen → RIGHT)
+    h  = ny * cx        # height (y-axis on screen → UP)
+    d  = nz * cx * 0.5 # depth  (projected as UP-RIGHT at 30°)
+
+    dx = RIGHT * cx * 0.866  # isometric x-step
+    dy = UP    * cx * 0.5    # isometric depth y-step
+
+    origin = ORIGIN
+    # Front face  (nx × ny, lies in screen plane)
+    front_corners = [
+        origin,
+        origin + RIGHT * w,
+        origin + RIGHT * w + UP * h,
+        origin + UP * h,
+    ]
+    # Top face (nx × nz, slopes up-right)
+    top_corners = [
+        origin + UP * h,
+        origin + UP * h + RIGHT * w,
+        origin + UP * h + RIGHT * w + dx * nz,
+        origin + UP * h + dx * nz,
+    ]
+    # Right face (ny × nz, slopes up from right edge)
+    right_corners = [
+        origin + RIGHT * w,
+        origin + RIGHT * w + dx * nz,
+        origin + RIGHT * w + dx * nz + UP * h,
+        origin + RIGHT * w + UP * h,
+    ]
+
+    def face(corners, alpha):
+        return Polygon(*corners,
+                       fill_color=fc, fill_opacity=alpha,
+                       stroke_color=ec, stroke_width=0.8)
+
+    grp = VGroup(
+        face(front_corners, opacity),
+        face(top_corners,   opacity * 0.65),
+        face(right_corners, opacity * 0.80),
+    )
+    return grp
+
+
+# ── Main scene ────────────────────────────────────────────────────────────────
 class CPDecomposition(Scene):
     def construct(self):
         self.camera.background_color = BG_COLOR
 
-        # ── Original tensor ───────────────────────────────────────────────
-        W = Tensor3D(nx=5, ny=4, nz=6, cell_size=0.28,
-                     face_color=TENSOR_COLOR, edge_color=TENSOR_EDGE_COLOR)
-        W.shift(LEFT * 3.5)
-        W_label = Text("W", font_size=30, color=TENSOR_EDGE_COLOR)
-        W_label.next_to(W, UP, buff=0.15)
+        # ══════════════════════════════════════════════════════════════════════
+        # PHASE A (0–10s): Tensor W quay, câu hỏi xuất hiện
+        # ══════════════════════════════════════════════════════════════════════
+        title = tex(r"\mathcal{W}\text{ — weight tensor}", 32, HIGHLIGHT_COLOR)
+        title.move_to(at(X_MID, Y_TITLE))
+        self.play(FadeIn(title), run_time=0.6)
 
-        self.play(FadeIn(W, scale=0.8), FadeIn(W_label), run_time=T_MEDIUM)
+        # Tensor block
+        tensor_W = make_box(5, 4, 6, cx=0.26, fc=TENSOR_COLOR, ec=TENSOR_EDGE_COLOR)
+        tensor_W.move_to(at(X_MID - 0.5, Y_BODY))
 
-        question = Text("Có cách nào lưu ít hơn không?",
-                        font_size=20, color=HIGHLIGHT_COLOR)
-        question.to_edge(DOWN, buff=0.4)
-        self.play(FadeIn(question), run_time=T_FAST)
-        self.wait(0.5)
-        self.play(FadeOut(question), run_time=T_FAST)
+        lbl_W   = tex(r"\mathcal{W}", 36, TENSOR_EDGE_COLOR).next_to(tensor_W, UP, buff=0.15)
+        size_lbl = txt("9,408 parameters", 18, SUBTITLE_COLOR).next_to(tensor_W, DOWN, buff=0.14)
 
-        # ── Three factor vectors ──────────────────────────────────────────
-        vec_height = 1.4
-        vec_a = Rectangle(width=0.32, height=vec_height,
-                          fill_color=VECTOR_COLOR, fill_opacity=0.9,
-                          stroke_color=VECTOR_COLOR, stroke_width=1)
-        vec_b = Rectangle(width=vec_height, height=0.32,
-                          fill_color=MATRIX_COLOR, fill_opacity=0.9,
-                          stroke_color=MATRIX_COLOR, stroke_width=1)
-        vec_c = Rectangle(width=0.32, height=0.9,
-                          fill_color=TENSOR_EDGE_COLOR, fill_opacity=0.9,
-                          stroke_color=TENSOR_EDGE_COLOR, stroke_width=1)
+        self.play(FadeIn(tensor_W, scale=0.85), FadeIn(lbl_W), FadeIn(size_lbl), run_time=0.8)
 
-        la = Text("a", font_size=24, color=VECTOR_COLOR)
-        lb = Text("b", font_size=24, color=MATRIX_COLOR)
-        lc = Text("c", font_size=24, color=TENSOR_EDGE_COLOR)
+        # Slow rotation (just shift-scale illusion via animate)
+        self.play(tensor_W.animate.shift(RIGHT * 0.12).scale(1.03), run_time=1.0,
+                  rate_func=there_and_back)
 
-        vec_a.move_to(RIGHT * 0.3)
-        vec_b.move_to(RIGHT * 1.5)
-        vec_c.move_to(RIGHT * 2.7)
-        for v, l in zip([vec_a, vec_b, vec_c], [la, lb, lc]):
-            l.next_to(v, DOWN, buff=0.12)
+        # Question text
+        question = txt("Is it possible to store fewer parameters?", 28, YELLOW)
+        question.move_to(at(X_MID, Y_NOTE + 0.6))
+        self.play(Write(question), run_time=1.2)
+        self.wait(2.0)   # hold so voice-over can land
 
-        factors_grp = VGroup(vec_a, vec_b, vec_c, la, lb, lc)
+        # ══════════════════════════════════════════════════════════════════════
+        # PHASE B (10–30s): Khối "tan chảy" → 3 vector a, b, c
+        # ══════════════════════════════════════════════════════════════════════
+        sub_b = tex(r"\text{Decomposing the tensor into three vectors}", 26, HIGHLIGHT_COLOR)
+        sub_b.move_to(at(X_MID, Y_SUB))
+        self.play(FadeIn(sub_b), run_time=0.5)
 
-        vo = Text("Thay vì lưu cả khối, ta chỉ lưu 3 vectors",
-                  font_size=18, color=SUBTITLE_COLOR).to_edge(DOWN, buff=0.3)
+        # Build the three factor vectors
+        def make_vec_col(n, color, cell_h=0.30, cell_w=0.14):
+            return VGroup(*[
+                Rectangle(height=cell_h, width=cell_w,
+                           fill_color=color, fill_opacity=0.9, stroke_width=0.6,
+                           stroke_color=WHITE)
+                for _ in range(n)
+            ]).arrange(DOWN, buff=0.07)
 
-        # W "dissolves" into the factor vectors
+        def make_vec_row(n, color, cell_h=0.14, cell_w=0.30):
+            return VGroup(*[
+                Rectangle(height=cell_h, width=cell_w,
+                           fill_color=color, fill_opacity=0.9, stroke_width=0.6,
+                           stroke_color=WHITE)
+                for _ in range(n)
+            ]).arrange(RIGHT, buff=0.07)
+
+        vec_a = make_vec_col(5, YELLOW)
+        vec_b = make_vec_row(4, ORANGE)
+        vec_c = make_vec_col(6, "#FF9999")   # light red / salmon
+
+        # Position: spread to left side after melt
+        vec_a.move_to(at(X_LEFT + 0.5, Y_BODY + 0.3))
+        vec_b.move_to(at(X_LEFT + 2.0, Y_BODY + 0.3))
+        vec_c.move_to(at(X_LEFT + 3.5, Y_BODY + 0.3))
+
+        lbl_a = tex(r"a\in\mathbb{R}^5",  20, YELLOW ).next_to(vec_a, DOWN, buff=0.10)
+        lbl_b = tex(r"b\in\mathbb{R}^4",  20, ORANGE ).next_to(vec_b, DOWN, buff=0.10)
+        lbl_c = tex(r"c\in\mathbb{R}^6",  20, "#FF9999").next_to(vec_c, DOWN, buff=0.10)
+
+        # Melt animation: tensor fades + dissolves into vectors
         self.play(
-            W.animate.set_opacity(0.3),
-            run_time=T_MEDIUM,
+            tensor_W.animate.set_opacity(0.12),
+            FadeOut(lbl_W), FadeOut(size_lbl), FadeOut(question),
+            run_time=1.0
         )
         self.play(
             LaggedStart(
-                ReplacementTransform(W.copy(), vec_a),
-                ReplacementTransform(W.copy(), vec_b),
-                ReplacementTransform(W.copy(), vec_c),
-                lag_ratio=0.3,
+                TransformFromCopy(tensor_W, vec_a),
+                TransformFromCopy(tensor_W, vec_b),
+                TransformFromCopy(tensor_W, vec_c),
+                lag_ratio=0.35
             ),
-            FadeIn(la), FadeIn(lb), FadeIn(lc),
-            FadeIn(vo),
-            run_time=T_SLOW,
+            run_time=2.5
         )
-        self.play(FadeOut(W), FadeOut(W_label), run_time=T_FAST)
-        self.wait(0.5)
-        self.play(FadeOut(vo), run_time=T_FAST)
+        self.play(
+            FadeIn(lbl_a), FadeIn(lbl_b), FadeIn(lbl_c),
+            FadeOut(tensor_W),
+            run_time=0.7
+        )
 
-        # ── Outer product: a ∘ b → matrix ────────────────────────────────
-        op_title = Text("Outer Product: a ∘ b ∘ c", font_size=20,
-                        color=HIGHLIGHT_COLOR, weight=BOLD)
-        op_title.to_edge(UP, buff=0.3)
-        self.play(FadeIn(op_title), run_time=T_FAST)
+        voice_note = txt("Instead of storing the entire tensor, we only store the three vectors.", 22, SUBTITLE_COLOR)
+        voice_note.move_to(at(X_MID, Y_NOTE + 0.5))
+        self.play(FadeIn(voice_note), run_time=0.5)
+        self.wait(3.5)   # voice-over time
 
-        # Position vectors for outer product demo
-        a_demo = vec_a.copy().set_height(1.6).move_to(LEFT * 3.5 + UP * 0.0)
-        b_demo = vec_b.copy().set_width(2.0).move_to(LEFT * 2.0 + UP * 1.2)
-        la2 = Text("a", font_size=22, color=VECTOR_COLOR).next_to(a_demo, LEFT, buff=0.1)
-        lb2 = Text("b", font_size=22, color=MATRIX_COLOR).next_to(b_demo, UP, buff=0.1)
+        # ══════════════════════════════════════════════════════════════════════
+        # PHASE C (30–60s): Outer-product demo + 5 rank-1 terms
+        # ══════════════════════════════════════════════════════════════════════
+        sub_c = tex(r"\text{Outer Product: }a\circ b \rightarrow \text{Matrix}\ 5\times4", 26, HIGHLIGHT_COLOR)
+        sub_c.move_to(at(X_MID, Y_SUB))
+        self.play(ReplacementTransform(sub_b, sub_c), FadeOut(voice_note), run_time=0.6)
+
+        # ── a ⊗ b → 2D matrix ─────────────────────────────────────────────
+        mat_ab = VGroup(*[
+            VGroup(*[
+                Square(side_length=0.22,
+                       fill_color=interpolate_color(YELLOW, ORANGE, j / 3),
+                       fill_opacity=0.55, stroke_width=0.6)
+                for j in range(4)
+            ]).arrange(RIGHT, buff=0.04)
+            for i in range(5)
+        ]).arrange(DOWN, buff=0.04)
+        mat_ab.move_to(at(X_RIGHT - 0.5, Y_BODY + 0.2))
+
+        lbl_ab = tex(r"a\circ b", 22, ORANGE).next_to(mat_ab, UP, buff=0.12)
+
+        # Animate: a and b sweep together to form matrix
+        self.play(
+            vec_a.animate.move_to(at(X_RIGHT - 2.0, Y_BODY)),
+            vec_b.animate.move_to(at(X_RIGHT - 0.5, Y_BODY + 1.4)),
+            run_time=1.0
+        )
+        self.play(
+            LaggedStart(
+                FadeOut(vec_a), FadeOut(lbl_a),
+                FadeOut(vec_b), FadeOut(lbl_b),
+                lag_ratio=0.2
+            ),
+            FadeIn(mat_ab, scale=0.8), FadeIn(lbl_ab),
+            run_time=1.2
+        )
+        self.wait(1.0)
+
+        # ── (a ⊗ b) ⊗ c → 3D tensor ──────────────────────────────────────
+        sub_c2 = tex(r"(a\circ b)\circ c \rightarrow \text{3D tensor}\ 5\times4\times6", 26, HIGHLIGHT_COLOR)
+        sub_c2.move_to(at(X_MID, Y_SUB))
+        self.play(ReplacementTransform(sub_c, sub_c2), run_time=0.5)
+
+        hint_c = txt("Matrix encountering vector c → explodes into a 3D tensor!", 22, SUBTITLE_COLOR)
+        hint_c.move_to(at(X_MID, Y_NOTE + 0.5))
+        self.play(FadeIn(hint_c), run_time=0.4)
+
+        tensor_r1 = make_box(5, 4, 6, cx=0.20, fc=interpolate_color(YELLOW, ORANGE, 0.5), ec=ORANGE)
+        tensor_r1.move_to(at(X_RIGHT - 0.5, Y_BODY))
+        lbl_r1 = tex(r"a_1\circ b_1\circ c_1", 20, ORANGE).next_to(tensor_r1, UP, buff=0.12)
 
         self.play(
-            factors_grp.animate.shift(RIGHT * 2),
-            FadeIn(a_demo), FadeIn(b_demo), FadeIn(la2), FadeIn(lb2),
-            run_time=T_MEDIUM,
+            vec_c.animate.move_to(at(X_RIGHT - 0.5, Y_BODY - 1.3)),
+            run_time=0.6
         )
-
-        # a ∘ b → 2D matrix
-        mat_ab = Rectangle(width=2.0, height=1.6,
-                           fill_color=BLUE_D, fill_opacity=0.6,
-                           stroke_color=BLUE_B, stroke_width=2)
-        mat_ab.move_to(LEFT * 2.0 + UP * 0.0)
-
         self.play(
-            a_demo.animate.set_opacity(0.4),
-            b_demo.animate.set_opacity(0.4),
-            FadeIn(mat_ab, scale=0.8),
-            run_time=T_MEDIUM,
+            ReplacementTransform(mat_ab, tensor_r1),
+            ReplacementTransform(lbl_ab, lbl_r1),
+            FadeOut(vec_c), FadeOut(lbl_c),
+            run_time=1.5
         )
-        mat_lbl = Text("a ⊗ b", font_size=20,
-                          color=BLUE_B).next_to(mat_ab, LEFT, buff=0.1)
-        self.play(FadeIn(mat_lbl), run_time=T_FAST)
+        self.wait(1.5)
 
-        # (a∘b) ∘ c → rank-1 3D block
-        rank1 = Tensor3D(nx=4, ny=5, nz=3, cell_size=0.22,
-                         face_color="#2255aa", edge_color=BLUE_B)
-        rank1.move_to(LEFT * 2.0 + DOWN * 0.2)
-        c_demo = vec_c.copy().move_to(LEFT * 0.3 + DOWN * 0.0)
-        lc2 = Text("c", font_size=22, color=TENSOR_EDGE_COLOR).next_to(c_demo, RIGHT, buff=0.1)
+        # ── 5 bộ (a_r, b_r, c_r) mỗi màu khác nhau ─────────────────────
+        sub_c3 = tex(r"\text{Creating multiple sets }(a_r,\,b_r,\,c_r)", 26, HIGHLIGHT_COLOR)
+        sub_c3.move_to(at(X_MID, Y_SUB))
+        self.play(ReplacementTransform(sub_c2, sub_c3), FadeOut(hint_c), run_time=0.5)
 
-        self.play(FadeIn(c_demo), FadeIn(lc2), run_time=T_FAST)
-        self.play(
-            ReplacementTransform(VGroup(mat_ab, c_demo), rank1),
-            FadeOut(VGroup(mat_lbl, a_demo, b_demo, la2, lb2, lc2)),
-            run_time=T_MEDIUM,
-        )
-        r1_lbl = Text("a ∘ b ∘ c",
-                         font_size=20, color=BLUE_B).next_to(rank1, DOWN, buff=0.1)
-        self.play(FadeIn(r1_lbl), run_time=T_FAST)
-        self.wait(0.5)
+        voice2 = txt("We create multiple sets like this.", 22, SUBTITLE_COLOR)
+        voice2.move_to(at(X_MID, Y_NOTE + 0.5))
+        self.play(FadeIn(voice2), run_time=0.4)
 
-        # ── R rank-1 terms ────────────────────────────────────────────────
-        self.play(
-            FadeOut(VGroup(rank1, r1_lbl, factors_grp, op_title)),
-            run_time=T_FAST,
-        )
-
-        rank1_colors = [
-            ("#1a3a6a", "#4488cc"),
-            ("#2a4a1a", "#66aa44"),
-            ("#4a2a1a", "#cc6633"),
-            ("#3a1a4a", "#9944cc"),
-            ("#4a3a1a", "#ccaa22"),
-        ]
         R = 5
-        rank1_blocks = VGroup()
-        for i, (fc, ec) in enumerate(rank1_colors):
-            b = Tensor3D(nx=3, ny=4, nz=4, cell_size=0.18,
-                         face_color=fc, edge_color=ec)
-            b.move_to(LEFT * 3.5 + RIGHT * i * 1.55 + UP * 0.3)
-            rank1_blocks.add(b)
+        small_blocks = VGroup()
+        small_lbls   = VGroup()
+        xs = np.linspace(-4.5, 3.5, R)
 
-        plus_signs = VGroup()
-        for i in range(R - 1):
-            p = Text("+", font_size=28, color=SUM_NODE_COLOR)
-            p.move_to(LEFT * 2.75 + RIGHT * i * 1.55 + UP * 0.3)
-            plus_signs.add(p)
-
-        vo2 = Text("Tạo R bộ vectors, mỗi bộ cho một rank-1 block",
-                   font_size=18, color=SUBTITLE_COLOR).to_edge(DOWN, buff=0.4)
+        for r in range(R):
+            blk = make_box(5, 4, 6, cx=0.14, fc=RANK_COLORS[r], ec=RANK_COLORS[r], opacity=0.75)
+            blk.move_to(at(xs[r], Y_BODY - 0.4))
+            lbl = tex(rf"a_{r+1}\circ b_{r+1}\circ c_{r+1}", 16, RANK_COLORS[r])
+            lbl.next_to(blk, DOWN, buff=0.08)
+            small_blocks.add(blk)
+            small_lbls.add(lbl)
 
         self.play(
-            LaggedStart(*[FadeIn(b, scale=0.7) for b in rank1_blocks], lag_ratio=0.2),
-            LaggedStart(*[FadeIn(p) for p in plus_signs], lag_ratio=0.2),
-            FadeIn(vo2),
-            run_time=T_SLOW,
+            FadeOut(tensor_r1), FadeOut(lbl_r1),
+            run_time=0.4
         )
-        self.wait(0.5)
+        self.play(
+            LaggedStart(
+                *[FadeIn(small_blocks[r], shift=UP * 0.2) for r in range(R)],
+                lag_ratio=0.25
+            ),
+            run_time=2.0
+        )
+        self.play(
+            LaggedStart(
+                *[FadeIn(small_lbls[r]) for r in range(R)],
+                lag_ratio=0.15
+            ),
+            run_time=1.0
+        )
+        self.wait(2.0)
 
-        # ── Sum → approximates W ──────────────────────────────────────────
-        self.play(FadeOut(VGroup(rank1_blocks, plus_signs, vo2)), run_time=T_FAST)
+        # ══════════════════════════════════════════════════════════════════════
+        # PHASE D (60–70s): Chồng khối, ≈ W, công thức hoàn chỉnh
+        # ══════════════════════════════════════════════════════════════════════
+        sub_d = MathTex(
+            r"\text{Adding all together } \approx \text{ Original tensor } \mathcal{W}",
+            font_size=26,
+            color=GREEN_C
+        )
+        sub_d.move_to(at(X_MID, Y_SUB))
+        self.play(ReplacementTransform(sub_c3, sub_d), FadeOut(voice2), run_time=0.5)
 
-        W_approx = Tensor3D(nx=5, ny=4, nz=6, cell_size=0.28,
-                            face_color=TENSOR_COLOR, edge_color=TENSOR_EDGE_COLOR)
-        W_approx.move_to(RIGHT * 2.5)
-
-        formula = Text("W ≈ Σ(r=1..R)  aᵣ ∘ bᵣ ∘ cᵣ",
-            font_size=28, color=MATH_COLOR,
-        ).to_edge(DOWN, buff=0.5)
-
-        approx_sign = Text("≈", font_size=34, color=HIGHLIGHT_COLOR)
-        approx_sign.move_to(ORIGIN)
+        # Stack all small blocks at center with offset
+        stack_center = at(X_MID - 0.8, Y_BODY)
+        stacked = VGroup()
+        for r in range(R):
+            b = make_box(5, 4, 6, cx=0.20, fc=RANK_COLORS[r], ec=RANK_COLORS[r], opacity=0.70)
+            b.move_to(stack_center + UR * 0.09 * r)
+            stacked.add(b)
 
         self.play(
-            FadeIn(W_approx, scale=0.8),
-            FadeIn(approx_sign),
-            Write(formula),
-            run_time=T_SLOW,
+            FadeOut(small_lbls),
+            LaggedStart(
+                *[ReplacementTransform(small_blocks[r], stacked[r]) for r in range(R)],
+                lag_ratio=0.18
+            ),
+            run_time=2.0
         )
 
-        cp_label = Text("CP Decomposition", font_size=24,
-                        color=HIGHLIGHT_COLOR, weight=BOLD)
-        cp_label.to_edge(UP, buff=0.3)
-        self.play(FadeIn(cp_label), run_time=T_FAST)
-        self.wait(1.2)
+        # Plus signs between offsets (visual shorthand)
+        plus_signs = VGroup(*[
+            tex("+", 28, WHITE).move_to(stack_center + UR * 0.09 * r + LEFT * 0.6)
+            for r in range(1, R)
+        ])
+        self.play(LaggedStart(*[FadeIn(p) for p in plus_signs], lag_ratio=0.1), run_time=0.6)
+        self.wait(0.4)
 
-        self.play(FadeOut(VGroup(W_approx, approx_sign, formula, cp_label)),
-                  run_time=T_MEDIUM)
+        # ≈ W label
+        approx_W = tex(r"\approx\,\mathcal{W}", 42, HIGHLIGHT_COLOR)
+        approx_W.next_to(stacked, RIGHT, buff=0.5)
+        self.play(FadeIn(approx_W, scale=1.2), run_time=0.6)
+
+        # Full formula
+        formula = MathTex(
+            r"\mathcal{W} \approx \sum_{r=1}^{R}"
+            r"a_r \circ b_r \circ c_r",
+            font_size=38, color=HIGHLIGHT_COLOR
+        ).move_to(at(X_RIGHT + 0.2, Y_BODY - 1.5))
+        self.play(Write(formula), run_time=1.2)
+
+        voice3 = txt("This is the CP Decomposition!", 26, GREEN_C)
+        voice3.move_to(at(X_MID, Y_NOTE + 0.5))
+        self.play(FadeIn(voice3, scale=1.1), run_time=0.6)
+        self.wait(3.0)
+
+        # ── Outro ─────────────────────────────────────────────────────────────
+        self.play(FadeOut(Group(*self.mobjects)), run_time=0.9)

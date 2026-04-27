@@ -1,0 +1,251 @@
+Bonus Script
+Phong cách: 3Blue1Brown
+Thời lượng: ~13 phút
+
+Quy ước màu sắc (tùy chỉnh phù hợp) :
+Background: Đen 
+Tensor/Khối dữ liệu: Xanh dương gradient 
+Vector: Vàng cam 
+Ma trận: Xanh lá nhạt 
+Nút cộng (+): Xanh dương nhạt 
+Nút nhân (×): Đỏ cam 
+Công thức toán: Trắng 
+Tốc độ animation:
+Slow: 2-3 giây (phần giải thích khái niệm)
+Medium: 1-1.5 giây (transitions)
+Fast: 0.5 giây (hiệu ứng nhấn mạnh)
+
+PHẦN 1: MỞ ĐẦU - CHIẾC HỘP ĐA CHIỀU
+Thời gian: 0:00 - 1:30 (~90 giây)
+SCENE 1A: Từ điểm đến khối (0:00 - 0:40)
+Action:
+Giây 0-5: Màn hình đen tuyền. Một điểm trắng nhỏ xuất hiện chính giữa, phát sáng nhẹ (glow effect). 
+Giây 5-10: Điểm này kéo dài sang phải thành một đường thẳng gồm 5 điểm sáng xếp ngang. Mỗi điểm có số hiện ra bên dưới: [3, 7, 2, 9, 1] Voice-over: "Đây là một Vector - một danh sách các con số."
+Giây 10-20: Đường này nhân bản thành 4 bản sao, chúng xếp chồng lên nhau (từ dưới lên trên), tạo thành một lưới 4×5 (Ma trận). Các số nhảy múa vào vị trí. Voice-over: "Xếp nhiều Vector lại, ta có Ma trận - một bảng tính."
+Giây 20-35: Lưới này tự nhân bản thành nhiều tấm (khoảng 6-7 tấm), xếp theo chiều sâu tạo thành khối lập phương 3D đang quay nhẹ. Dùng màu gradient xanh dương, các cạnh phát sáng. Voice-over: "Xếp nhiều Ma trận lại, ta có Tensor."
+Giây 35-40: Zoom ra để thấy rõ khối Tensor hoàn chỉnh, các trục tọa độ X, Y, Z xuất hiện với label.
+
+SCENE 1B: Ví dụ thực tế - Hệ thống gợi ý (0:40 - 1:10)
+Action:
+Giây 40-50: Khối Tensor từ scene trước "transform" - các trục được gắn nhãn mới:
+Trục X: "Users" (icon người dùng nhỏ)
+Trục Y: "Products" (icon giỏ hàng)
+Trục Z: "Time" (icon đồng hồ)
+Voice-over: "Ví dụ: trong hệ thống gợi ý Netflix, Tensor lưu thông tin người dùng nào, xem phim gì, vào thời điểm nào."
+Giây 50-1:00: Một "sợi dây" màu vàng cam được rút ra từ khối - một Fiber. Nó là một đường thẳng xuyên qua khối theo hướng Time (Z). 
+Highlight: Các điểm trên sợi dây sáng lên tuần tự Voice-over: "Mỗi 'sợi' trong khối này gọi là Fiber - nó cho biết một người dùng xem một bộ phim thế nào theo thời gian."
+Giây 1:00-1:10: Khối Tensor "mở bung" ra thành một tấm thảm phẳng lớn (Unfolding). Hiệu ứng như mở một hộp các-tông thành tấm phẳng. 
+Voice-over: "Đôi khi ta cần 'ép phẳng' khối này để máy tính xử lý dễ hơn."
+
+SCENE 1C: Vấn đề - Sự bùng nổ dữ liệu (1:10 - 1:30)
+Action:
+Giây 1:10-1:20: Khối Tensor xuất hiện lại, nhưng lần này nó phình to dần, các số bên trong khối nhảy lên như bộ đếm: "1,000 → 10,000 → 100,000 → 1,000,000"
+Voice-over: "Nhưng có vấn đề: khối này càng lớn, càng tốn bộ nhớ khủng khiếp!"
+Giây 1:20-1:30: Màn hình "nứt" ra với hiệu ứng cảnh báo (đỏ nhấp nháy). Text xuất hiện to: "Làm sao có thể nén được hết khối dữ liệu đó" Sau đó text này biến thành câu trả lời phát sáng: "LOW-RANK FACTORIZATION" 
+Voice-over: "Đây là lúc ta cần phép màu: Low-Rank Computation - nghệ thuật nén mà không mất thông tin quan trọng!"
+
+PHẦN 2: TENSOR TRONG AI (DEEP LEARNING)
+Thời gian: 1:30 - 5:00 (~210 giây)
+SCENE 2A: Mắt AI nhìn thế giới (1:30 - 2:10)
+Action:
+Giây 1:30-1:40: Hiển thị một bức ảnh mèo đơn giản (hoặc geometric cat icon). Bên cạnh là biểu tượng con mắt. 
+Voice-over: "Khi AI nhìn một bức ảnh..."
+Giây 1:40-1:55: Zoom vào "bên trong" con mắt AI. Hiện lên sơ đồ CNN đơn giản (vài layer, abstract). Một layer Convolution được highlight, zoom thêm một lần nữa. 
+Giây 1:55-2:10: Bên trong layer đó là khối Tensor W với 4 chiều, các label xuất hiện:
+Chiều 1: C_out​ = 64 (số filter đầu ra)
+Chiều 2: C_in​ = 3 (RGB)
+Chiều 3: K_H= 7 (chiều cao kernel)
+Chiều 4: K_W = 7 (chiều rộng kernel)
+Bên cạnh hiện phép tính: 64×3×7×7=9,40864 
+Voice-over: "Nó không chỉ dùng một ống kính. Nó có cả 64 'ông thợ' soi ảnh, mỗi ông có 3 mắt màu, mỗi mắt nhìn vùng 7×7 pixel. Tổng cộng gần 10,000 con số chỉ cho một layer"
+
+SCENE 2B: CP Decomposition - Phép phân tách (2:10 - 3:20)
+Action:
+Giây 2:10-2:20: Khối Tensor W từ scene trước đang quay. Text hiện lên: "Có cách nào lưu ít hơn không?"
+Giây 2:20-2:40: Khối này bắt đầu "tan chảy" thành các sợi màu vàng cam. 3 thanh vector xuất hiện:
+a (vector dọc, màu vàng)
+b (vector ngang, màu cam)
+c (vector chiều sâu, màu đỏ nhạt)
+Voice-over: "Thay vì lưu cả khối, ta chỉ lưu 3 thanh gỗ - 3 vector."
+Giây 2:40-3:00: Animation "Outer Product":
+Vector  a và b "giao nhau", tạo thành một ma trận 2D (hiệu ứng như chúng đan vào nhau)
+Ma trận này gặp vector c, bùng nổ thành khối 3D
+Công thức xuất hiện bên cạnh: $$a \circ b \circ c = \text{một khối nhỏ}
+Giây 3:00-3:10: Nhiều bộ (a_r, b_r, c_r)  xuất hiện (khoảng 5 bộ, mỗi bộ màu khác nhau). Chúng lần lượt tạo thành các khối nhỏ. 
+Voice-over: "Ta tạo nhiều bộ như vậy."
+Giây 3:10-3:20: Tất cả khối nhỏ "chồng lên nhau" (cộng dồn) với hiệu ứng cộng (+). Kết quả cuối cùng xấp xỉ khối W ban đầu (hiện dấu ≈). Công thức hoàn chỉnh xuất hiện:
+ 
+Voice-over: "Cộng tất cả lại, ta được khối gốc. Đây chính là CP Decomposition."
+
+SCENE 2C: Ứng dụng LoRA (3:20 - 4:00)
+Action:
+Giây 3:20-3:30: Hiển thị logo/icon của một LLM (ChatGPT style). Bên cạnh là một ma trận khổng lồ WW W (màu xám, rất to). Text: "Ma trận trọng số: 4096 × 4096 = 16 triệu tham số" Voice-over: "Trong các mô hình ngôn ngữ lớn, mỗi layer có hàng triệu tham số."
+Giây 3:30-3:45: Ma trận WW W "vỡ" thành 2 ma trận nhỏ hơn nhiều:
+Ma trận A: r×4096 (rất mỏng, màu xanh)
+Ma trận B: 4096×r(rất mỏng, màu vàng)
+Với r=8 (số rất nhỏ)
+Chúng được nối với nhau bằng mũi tên nhân (×). 
+Giây 3:45-4:00: So sánh số lượng tham số:
+Cách cũ: 4096×4096=16,777,216 (màu đỏ)
+Cách mới: r×4096+4096×r=65,536 (màu xanh)
+Text lớn xuất hiện: "Giảm 256 lần!" 
+Voice-over: "Bằng Low-Rank Adaptation - hay LoRA, ta chỉ cần cập nhật 2 ma trận nhỏ này. Số tham số giảm hàng trăm lần, giúp fine-tune mô hình chỉ bằng laptop thường"
+
+SCENE 2D: Polynomial Networks (4:00 - 5:00)
+Action:
+Giây 4:00-4:15: Hiển thị input x (một vector màu vàng). Nó tự nhân với chính nó tạo thành  x o x (outer product, thành ma trận). 
+Voice-over: "Trong mạng đa thức, ta cho input tương tác với chính nó."
+Giây 4:15-4:30: Ma trận x o  x lại nhân với x, tạo thành khối 3D. Cứ thế tiếp tục, tạo thành Tensor bậc cao. 
+Giây 4:30-4:45: Một Tensor bậc 4 xuất hiện (x o x o x o x. Bên cạnh là một trọng số W cũng bậc 4. Animation: Hai khối này "tương tác" (contraction), tạo ra output y. 
+Voice-over: "Bằng Tensor bậc cao, mô hình bắt được mọi sự tương tác phức tạp giữa các đặc điểm."
+Giây 4:45-5:00: Show case: một hình ảnh decision boundary phức tạp (đường cong uốn lượn) so với linear (đường thẳng đơn giản). 
+Voice-over: "Nhờ đó, AI hiểu được các mối quan hệ phi tuyến mà mạng thường không bắt được."
+
+PHẦN 3: TỪ TENSOR SANG MẠCH ĐIỆN (CIRCUITS)
+Thời gian: 5:00 - 8:30 (210 giây)
+SCENE 3A: Sinh ra một mạch (5:00 - 5:45)
+Action:
+Giây 5:00-5:10: Khối Tensor từ phần trước đang quay. Text xuất hiện: "Tensor không chỉ lưu dữ liệu..."
+Giây 5:10-5:30: Khối Tensor bắt đầu "tan rã" thành một sơ đồ mạng lưới:
+Các điểm (nodes) xuất hiện
+Các đường nối (edges) nối chúng lại
+Một số node là hình tròn xanh với ký hiệu +
+Một số node là hình tròn đỏ với ký hiệu ×
+Voice-over: "...nó còn là cách ta TÍNH TOÁN! Mỗi phép phân tách Tensor là một mạch điện toán học."
+Giây 5:30-5:45: Zoom vào cấu trúc mạch:
+Layer dưới (input): Các vector nhỏ
+Layer giữa: Nút nhân (×) - "Các yếu tố độc lập nhau"
+Layer trên: Nút cộng (+) - "Kết hợp các đặc điểm"
+Output: Một giá trị duy nhất
+Voice-over: "Nút nhân biểu thị 'CÁI NÀY VÀ CÁI KIA'. Nút cộng biểu thị 'CÁI NÀY HOẶC CÁI KIA'."
+
+SCENE 3B: Sum-Product Networks (5:45 - 6:30)
+Action:
+Giây 5:45-6:00: Hiển thị một SPN đầy đủ (đồ thị DAG):
+Lá (leaves): Các biến đầu vào x1,x2,x3
+Nút giữa: Xen kẽ Sum và Product
+Gốc (root): Output cuối cùng
+Voice-over: "Đây là Sum-Product Network - một cách biểu diễn hàm xác suất phức tạp."
+Giây 6:00-6:15: Animation "dòng chảy dữ liệu":
+Các giá trị từ input "chảy" lên qua mạch
+Khi qua nút ×, chúng nhân với nhau (animation merge)
+Khi qua nút +, chúng cộng lại (animation blend)
+Giây 6:15-6:30: So sánh hai mạch:
+Shallow Circuit: 2 layer, rất rộng
+Deep Circuit: 5 layer, hẹp hơn
+Text xuất hiện: "Càng sâu = Càng mạnh mà ít tham số hơn" 
+Voice-over: "Mạch càng sâu, càng biểu diễn được hàm phức tạp mà lại tiết kiệm tham số - giống như Deep Learning vậy!"
+
+SCENE 3C: Bài toán Attention và giải pháp Polynomial (6:30 - 7:45)
+Action:
+Giây 6:30-6:45: Hiển thị cơ chế Self-Attention truyền thống:
+Một lưới N×N (ma trận Attention) xuất hiện, rất dày đặc
+Text: O(N^2)  - màu đỏ
+Voice-over: "Trong Transformer, mỗi từ phải nhìn mọi từ khác. Độ phức tạp là bình phương độ dài - cực tốn kém!"
+Giây 6:45-7:00: Zoom vào công thức: 
+
+Highlight phép nhân QK^T tạo ra ma trận N×N
+Giây 7:00-7:20: Giải pháp xuất hiện - Polynomial Self-Attention:
+Thay softmax bằng hàm đa thức
+Animation: Ma trận QK^T "co lại" thành vector
+Công thức mới với Hadamard product (⊙)
+Giây 7:20-7:35: Animation so sánh:
+Cũ: Một mê cung phức tạp, paths đan chéo khắp nơi O(N^2) 
+Mới: Một con đường thẳng tắp (O(N)
+Giây 7:35-7:45: Text lớn xuất hiện: "Từ O(N^2) xuống O(N)" "Xử lý chuỗi dài gấp 1000 lần!"
+Voice-over: "Nhờ sắp xếp lại các nút nhân và cộng một cách thông minh, ta giảm độ phức tạp từ bình phương xuống tuyến tính!"
+
+SCENE 3D: TensorGrad (7:45 - 8:30)
+Action:
+Giây 7:45-8:00: Hiển thị quá trình training neural network:
+Forward pass (dữ liệu đi xuôi) - màu xanh
+Backward pass (gradient đi ngược) - màu đỏ
+Voice-over: "Khi huấn luyện mạng nơ-ron, ta cần lưu gradient - và chúng tốn bộ nhớ khủng khiếp!"
+Giây 8:00-8:15: Một khối Tensor gradient xuất hiện (màu đỏ nhạt, rất lớn). Animation: Khối này "phân tách" thành:
+Core Tensor (nhỏ hơn nhiều, màu đỏ đậm)
+Các ma trận factor (mỏng, màu hồng)
+Giây 8:15-8:30: So sánh bộ nhớ:
+Trước: Thanh bar dài (màu đỏ) - "100%"
+Sau: Thanh bar ngắn (màu xanh) - "20%"
+Text: "TensorGrad: Phân tách gradient để tiết kiệm bộ nhớ 5x!" 
+Voice-over: "TensorGrad áp dụng phân tách Tensor trực tiếp lên gradient, giúp huấn luyện mô hình khổng lồ bằng GPU thường!"
+PHẦN 4: LĂNG KÍNH GIẢI MÃ DỮ LIỆU (DATA MINING)
+Thời gian: 8:30 - 11:30 (180 giây)
+SCENE 4A: Bài toán bữa tiệc (8:30 - 9:15)
+Action:
+Giây 8:30-8:40: Hiển thị hình ảnh một căn phòng với nhiều người đang nói chuyện (có thể dùng abstract icons). Sóng âm thanh (waveforms) từ nhiều người trộn lẫn vào nhau, tạo thành một đám mây hỗn loạn. 
+Voice-over: "Trong một bữa tiệc ồn ào, làm sao tách được tiếng từng người?"
+Giây 8:40-8:55: Hiển thị Tensor 3D:
+Trục 1: Tần số (Frequency)
+Trục 2: Thời gian (Time)
+Trục 3: Vị trí micro (Mic positions)
+Khối Tensor này chứa dữ liệu hỗn hợp, nhiều màu lẫn lộn. 
+Giây 8:55-9:10: Tensor này đi qua một "lăng kính" hình tam giác phát sáng. Ở phía bên kia lăng kính, các tia màu sắc riêng biệt tách ra:
+Tia đỏ: "Giọng người A"
+Tia xanh: "Giọng người B"
+Tia vàng: "Tiếng nhạc nền"
+Voice-over: "Tensor Factorization là chiếc lăng kính - nó tách các nguồn âm thanh trộn lẫn!"
+Giây 9:10-9:15: Công thức xuất hiện: "Blind Source Separation"
+
+SCENE 4B: Non-negative Tensor Factorization (9:15 - 10:00)
+Action:
+Giây 9:15-9:30: Hiển thị một khối Tensor chứa dữ liệu khách hàng:
+User × Product × Time
+Nhiều ô có giá trị khác nhau, một số ô trống (màu xám)
+Giây 9:30-9:45: Khối này phân tách thành các "mảng miếng":
+Miếng 1 (màu đỏ): "Nhóm teen mua game vào cuối tuần"
+Miếng 2 (màu xanh): "Nhóm trung niên mua sách vào buổi sáng"
+Miếng 3 (màu vàng): "Nhóm mua đồ công nghệ vào Black Friday"
+Đặc biệt: Tất cả giá trị trong các miếng đều ≥ 0 (không âm). 
+Voice-over: "Bằng ràng buộc Không âm, mỗi miếng ghép mang ý nghĩa thực tế - không có 'hành vi âm' hay 'thời gian âm'!"
+Giây 9:45-10:00: Các miếng "chồng lên nhau" (phép cộng), tạo lại khối gốc. Animation: Các ô trống trong khối gốc giờ được "lấp đầy" bằng màu dự đoán. Text: "Tensor Completion - Dự đoán giá trị còn thiếu!" 
+Voice-over: "Thậm chí, nó còn dự đoán được các ô dữ liệu bị thiếu"
+
+SCENE 4C: Coupled Factorization (10:00 - 10:45)
+Action:
+Giây 10:00-10:15: Hiển thị 2 khối dữ liệu riêng biệt:
+Tensor (3D): User × Action × Time - màu xanh
+Matrix (2D): User × Demographics - màu vàng
+Chúng ở 2 bên màn hình, cách nhau. 
+Voice-over: "Đôi khi ta có nhiều nguồn dữ liệu về cùng một đối tượng."
+Giây 10:15-10:30: Cả 2 khối cùng phân tách. Một số vector factors từ 2 phía "kết nối" với nhau bằng sợi dây phát sáng (shared factors). 
+Giây 10:30-10:45: Animation: Thông tin "chảy" qua sợi dây từ Matrix sang Tensor và ngược lại. Text xuất hiện: "Coupled Tensor Factorization" "Kết hợp đa nguồn để hiểu sâu hơn!" 
+Voice-over: "Bằng cách chia sẻ thông tin, ta hiểu người dùng sâu hơn - vừa qua hành vi, vừa qua đặc điểm cá nhân!"
+
+SCENE 4D: Case Studies Flash (10:45 - 11:30)
+Action:
+Giây 10:45-11:00: Y tế - Hiển thị icon bệnh viện
+Tensor: Patient × Symptom × Time
+Animation: Phát hiện pattern bệnh (highlight một cluster)
+Text: "Phát hiện bệnh lý ẩn từ hồ sơ điện tử" 
+Giây 11:00-11:15: Mạng xã hội - Hiển thị icon social network
+Tensor: User × Hashtag × Time
+Animation: Phát hiện trending topic (một cụm từ nổi lên)
+Text: "Phát hiện xu hướng và cộng đồng" 
+Giây 11:15-11:30: Giao thông - Hiển thị icon xe hơi/đường phố
+Tensor: Location × Traffic × Time
+Animation: Dự đoán tắc đường (đường màu đỏ xuất hiện)
+Text: "Dự báo giao thông thời gian thực" 
+Voice-over: "Từ y tế, mạng xã hội đến giao thông - Tensor giúp ta hiểu mọi dữ liệu đa chiều!"
+
+PHẦN 5: KẾT - VẺ ĐẸP CỦA SỰ TINH GỌN
+Thời gian: 11:30 - 13:00 (90 giây)
+SCENE 5A: Tất cả hội tụ (11:30 - 12:15)
+Action:
+Giây 11:30-11:45: Tất cả hình ảnh từ các phần trước xuất hiện cùng lúc, lơ lửng trên màn hình:
+Khối Tensor 3D
+Mạch (Circuit)
+Lăng kính tách màu
+Các ví dụ ứng dụng
+Giây 11:45-12:00: Tất cả các hình này từ từ "bay" về phía trung tâm, thu nhỏ lại. 
+Giây 12:00-12:15: Chúng "tan rã" thành các ký tự toán học, xoay vòng rồi sắp xếp thành một công thức duy nhất,:
+		
+​ Công thức này phát sáng vàng trên nền đen. 
+Voice-over: "Tất cả đều quay về một ý tưởng duy nhất: Sự phức tạp có thể được xây dựng từ những thành phần đơn giản."
+
+SCENE 5B: Message cuối (12:15 - 13:00)
+Action:
+Giây 12:15-12:35: Công thức từ từ mờ đi. Text mới xuất hiện, từng dòng một: "AI không phải phép màu." (pause 1s) "Nó là hình học." (pause 1s) "Tensor là cách ta cấu trúc hóa vũ trụ dữ liệu." (pause 1s) "Low-Rank là cách ta tìm ra bản chất ẩn sau sự phức tạp." 
+Giây 12:35-12:50: Background từ từ chuyển từ đen sang gradient xanh dương đậm. Các hạt ánh sáng nhỏ (particles) lơ lửng. 
+Giây 12:50-13:00: Text cuối cùng xuất hiện ở giữa: "Cảm ơn thầy và các bạn đã đồng hành cùng nhóm chúng mình trong hành trình khám phá Tensor."  Hiển thị tên nhóm bên dưới
+Music: Nhạc nền chậm dần, kết thúc 

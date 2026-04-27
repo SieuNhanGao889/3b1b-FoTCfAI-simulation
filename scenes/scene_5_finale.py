@@ -1,13 +1,8 @@
 """
 scenes/scene_5_finale.py
-─────────────────────────────────────────────────────────────────────────────
-SCENE 5A  "Tất cả hội tụ"   (11:30 – 12:15)
-SCENE 5B  "Message cuối"     (12:15 – 13:00)
-
-- Tất cả icons từ mọi phần bay về trung tâm, tan thành công thức
-- Closing poetry text + gradient background fade-in
-─────────────────────────────────────────────────────────────────────────────
+SCENE 5: Convergence and closing message.
 """
+
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -17,212 +12,110 @@ from config import *
 from utils.tensor_objects import Tensor3D
 
 
+Y_TITLE = 3.40
+Y_SUB = 2.72
+Y_BODY = 0.10
+Y_NOTE = -3.30
+X_LEFT = -3.70
+X_RIGHT = 3.10
+
+
+def at(x, y):
+    return np.array([x, y, 0])
+
+
+def make_title(s):
+    return MathTex(s, font_size=32, color=HIGHLIGHT_COLOR).move_to(at(0, Y_TITLE))
+
+
+def make_sub(s, color=SUBTITLE_COLOR):
+    return MathTex(s, font_size=26, color=color).move_to(at(0, Y_SUB))
+
+
+def make_note(s, color=SUBTITLE_COLOR):
+    return MathTex(s, font_size=22, color=color).move_to(at(0, Y_NOTE))
+
+
 class Finale(Scene):
     def construct(self):
         self.camera.background_color = BG_COLOR
 
-        # ════════════════════════════════════════════════════════════════
-        # SCENE 5A – Everything converges
-        # ════════════════════════════════════════════════════════════════
+        title = make_title(r"\text{Everything Converges}")
+        sub = make_sub(r"\text{One low-rank principle}")
+        self.play(FadeIn(title), FadeIn(sub), run_time=T_FAST)
 
-        # ── Spawn representatives from all previous parts ─────────────────
+        icon_tensor = Tensor3D(nx=3, ny=3, nz=3, cell_size=0.20, face_color=TENSOR_COLOR, edge_color=TENSOR_EDGE_COLOR)
+        icon_tensor.move_to(at(X_LEFT - 1.2, Y_BODY + 1.2))
 
-        # Part 1 – Tensor block
-        block = Tensor3D(nx=4, ny=3, nz=4, cell_size=0.22,
-                         face_color=TENSOR_COLOR, edge_color=TENSOR_EDGE_COLOR)
-        block.move_to(LEFT * 5.0 + UP * 2.5)
+        icon_cp = VGroup(
+            Rectangle(width=0.20, height=0.85, fill_color=VECTOR_COLOR, fill_opacity=0.85, stroke_width=0),
+            Rectangle(width=0.85, height=0.20, fill_color=MATRIX_COLOR, fill_opacity=0.85, stroke_width=0),
+            Rectangle(width=0.20, height=0.65, fill_color=BLUE_C, fill_opacity=0.85, stroke_width=0),
+        ).arrange(RIGHT, buff=0.10).move_to(at(X_RIGHT + 1.0, Y_BODY + 1.1))
 
-        # Part 2 – CP factor vectors (3 thin bars)
-        cp_grp = VGroup(
-            Rectangle(width=0.2, height=1.0, fill_color=VECTOR_COLOR,
-                      fill_opacity=0.85, stroke_width=0),
-            Rectangle(width=1.0, height=0.2, fill_color=MATRIX_COLOR,
-                      fill_opacity=0.85, stroke_width=0),
-            Rectangle(width=0.2, height=0.65, fill_color=TENSOR_EDGE_COLOR,
-                      fill_opacity=0.85, stroke_width=0),
-        ).arrange(RIGHT, buff=0.15).move_to(RIGHT * 5.0 + UP * 2.5)
+        icon_circuit = VGroup(
+            Circle(radius=0.18, fill_color=SUM_NODE_COLOR, fill_opacity=0.9, stroke_width=0),
+            Circle(radius=0.18, fill_color=PRODUCT_NODE_COLOR, fill_opacity=0.9, stroke_width=0).shift(RIGHT * 0.7),
+            Line(LEFT * 0.15, RIGHT * 0.55, color=SUBTITLE_COLOR, stroke_width=1.5),
+        ).move_to(at(X_LEFT - 1.3, Y_BODY - 1.4))
 
-        # Part 3 – Circuit nodes
-        def _node(color, symbol):
-            c = Circle(radius=0.22, fill_color=color,
-                       fill_opacity=0.85, stroke_width=0)
-            t = Text(symbol, font_size=18, color=BLACK)
-            return VGroup(c, t)
+        prism = Triangle(fill_color="#9fd8ff", fill_opacity=0.30, stroke_color="#9fd8ff", stroke_width=2).scale(0.45).move_to(at(X_RIGHT + 1.0, Y_BODY - 1.5))
 
-        circuit_grp = VGroup(
-            _node(SUM_NODE_COLOR, "+"),
-            _node(PRODUCT_NODE_COLOR, r"\times"),
-        ).arrange(RIGHT, buff=0.2).move_to(LEFT * 5.0 + DOWN * 2.5)
+        icons = VGroup(icon_tensor, icon_cp, icon_circuit, prism)
+        self.play(LaggedStart(*[FadeIn(i, scale=0.7) for i in icons], lag_ratio=0.2), run_time=T_MEDIUM)
 
-        # Part 4 – Prism (lăng kính)
-        prism = Triangle(fill_color="#aaddff", fill_opacity=0.35,
-                         stroke_color="#aaddff", stroke_width=2).scale(0.5)
-        prism.move_to(RIGHT * 5.0 + DOWN * 2.5)
+        self.play(*[i.animate.move_to(at(0, Y_BODY)).scale(0.12) for i in icons], run_time=T_SLOW)
+        self.play(FadeOut(icons), run_time=T_FAST)
 
-        all_icons = VGroup(block, cp_grp, circuit_grp, prism)
-        self.play(
-            LaggedStart(*[FadeIn(ic, scale=0.6) for ic in all_icons], lag_ratio=0.2),
-            run_time=T_SLOW,
-        )
-        self.wait(0.4)
-
-        # ── All fly to center and shrink ──────────────────────────────────
-        self.play(
-            *[ic.animate.move_to(ORIGIN).scale(0.1) for ic in all_icons],
-            run_time=T_SLOW,
-            rate_func=rush_into,
-        )
-        self.play(FadeOut(all_icons), run_time=T_FAST)
-
-        # ── Core formula materializes ─────────────────────────────────────
-        formula = Text("T ≈ Σ(r=1..R)  aᵣ ∘ bᵣ ∘ cᵣ",
-            font_size=46, color=HIGHLIGHT_COLOR,
-        )
+        formula = MathTex(r"\mathcal{X}\approx\sum_{r=1}^{R} a_r\circ b_r\circ c_r", font_size=54, color=HIGHLIGHT_COLOR).move_to(at(0, Y_BODY + 0.1))
         self.play(Write(formula), run_time=T_SLOW)
 
-        # Glow pulse
-        glow = formula.copy().set_stroke(HIGHLIGHT_COLOR, width=8, opacity=0.25)
-        self.play(FadeIn(glow, scale=1.05), run_time=0.4)
+        glow = formula.copy().set_stroke(HIGHLIGHT_COLOR, width=9, opacity=0.25)
+        self.play(FadeIn(glow), run_time=0.4)
         self.play(FadeOut(glow), run_time=0.4)
 
-        sub_formula = Text(
-            "Sự phức tạp được xây dựng từ những thành phần đơn giản",
-            font_size=19, color=SUBTITLE_COLOR,
-        ).next_to(formula, DOWN, buff=0.35)
-        self.play(FadeIn(sub_formula, shift=UP * 0.1), run_time=T_MEDIUM)
-        self.wait(1.2)
+        essence = make_note(r"\text{Complexity from simple parts}")
+        self.play(FadeIn(essence), run_time=T_MEDIUM)
+        self.wait(1.0)
 
-        # Particle burst around formula
-        particles = VGroup(*[
-            Dot(
-                formula.get_center()
-                + np.array([np.cos(a) * 2.8, np.sin(a) * 1.4, 0]),
-                radius=0.05,
-                color=HIGHLIGHT_COLOR,
-                fill_opacity=0.7,
-            )
-            for a in np.linspace(0, TAU, 18, endpoint=False)
-        ])
-        self.play(
-            LaggedStart(*[GrowFromCenter(p) for p in particles], lag_ratio=0.04),
-            run_time=T_MEDIUM,
-        )
-        self.play(
-            *[p.animate.scale(0).set_opacity(0) for p in particles],
-            run_time=T_MEDIUM,
-        )
+        self.play(FadeOut(VGroup(sub, formula, essence)), run_time=T_MEDIUM)
 
-        self.play(FadeOut(VGroup(formula, sub_formula)), run_time=T_MEDIUM)
+        sub_close = make_sub(r"\text{Closing}", color=HIGHLIGHT_COLOR)
+        self.play(FadeIn(sub_close), run_time=T_FAST)
 
-        # ════════════════════════════════════════════════════════════════
-        # SCENE 5B – Closing message
-        # ════════════════════════════════════════════════════════════════
-
-        # ── Poetic closing lines ──────────────────────────────────────────
-        lines_data = [
-            ("AI không phải phép màu.",          WHITE),
-            ("Nó là hình học.",                   TENSOR_EDGE_COLOR),
-            ("Tensor là cách ta cấu trúc hóa\nvũ trụ dữ liệu.",  VECTOR_COLOR),
-            ("Low-Rank là cách ta tìm ra\nbản chất ẩn sau sự phức tạp.", HIGHLIGHT_COLOR),
+        lines = [
+            MathTex(r"\text{AI is not magic.}", font_size=34, color=WHITE),
+            MathTex(r"\text{It is geometry.}", font_size=34, color=TENSOR_EDGE_COLOR),
+            MathTex(r"\text{Tensors structure reality.}", font_size=30, color=VECTOR_COLOR),
+            MathTex(r"\text{Low-rank reveals essence.}", font_size=30, color=HIGHLIGHT_COLOR),
         ]
-        line_mobs = []
-        y_start = UP * 1.8
-        for i, (txt, col) in enumerate(lines_data):
-            mob = Text(txt, font_size=22, color=col,
-                       line_spacing=0.5, weight=BOLD if i > 0 else NORMAL)
-            mob.move_to(y_start + DOWN * i * 0.95)
-            line_mobs.append(mob)
 
-        for mob in line_mobs:
-            self.play(FadeIn(mob, shift=UP * 0.1), run_time=T_MEDIUM)
-            self.wait(0.6)
+        for i, line in enumerate(lines):
+            line.move_to(at(0, 1.4 - i * 0.8))
+            self.play(FadeIn(line, shift=UP * 0.08), run_time=T_MEDIUM)
+            self.wait(0.25)
 
-        # ── Background gradient sweep ─────────────────────────────────────
-        # Simulate gradient: stacked semi-transparent rectangles
-        grad_rects = VGroup(*[
-            Rectangle(
-                width=16, height=0.5,
-                fill_color=interpolate_color(BG_COLOR, "#001133",
-                                             i / 18),
-                fill_opacity=0.06,
-                stroke_width=0,
-            ).shift(DOWN * (4.5 - i * 0.5))
-            for i in range(18)
+        # soft gradient ambience
+        grad = VGroup(*[
+            Rectangle(width=16, height=0.55, fill_color=interpolate_color(ManimColor(BG_COLOR), ManimColor("#001933"), i / 16), fill_opacity=0.08, stroke_width=0).shift(DOWN * (4.2 - i * 0.55))
+            for i in range(16)
         ])
-        self.play(FadeIn(grad_rects), run_time=T_SLOW)
+        self.play(FadeIn(grad), run_time=T_SLOW)
 
-        # Floating particles
-        rng = np.random.default_rng(99)
-        float_particles = VGroup(*[
-            Dot(
-                np.array([rng.uniform(-6.5, 6.5),
-                          rng.uniform(-4.0, 4.0), 0]),
-                radius=rng.uniform(0.02, 0.07),
-                color=HIGHLIGHT_COLOR,
-                fill_opacity=rng.uniform(0.3, 0.7),
-            )
-            for _ in range(30)
+        rng = np.random.default_rng(123)
+        particles = VGroup(*[
+            Dot(at(rng.uniform(-6, 6), rng.uniform(-3.6, 3.2)), radius=rng.uniform(0.02, 0.05), color=HIGHLIGHT_COLOR, fill_opacity=rng.uniform(0.25, 0.55))
+            for _ in range(28)
         ])
-        self.play(
-            LaggedStart(*[GrowFromCenter(p) for p in float_particles], lag_ratio=0.04),
-            run_time=T_SLOW,
-        )
+        self.play(LaggedStart(*[GrowFromCenter(p) for p in particles], lag_ratio=0.03), run_time=T_MEDIUM)
 
-        # ── Thank-you card ────────────────────────────────────────────────
-        self.play(
-            *[mob.animate.shift(UP * 0.4).set_opacity(0.3)
-              for mob in line_mobs],
-            run_time=T_MEDIUM,
-        )
+        thanks_box = RoundedRectangle(corner_radius=0.22, width=8.8, height=2.5, fill_color="#090916", fill_opacity=0.94, stroke_color=HIGHLIGHT_COLOR, stroke_width=1.6)
+        thanks_box.move_to(at(0, -1.7))
+        thanks = MathTex(r"\text{Thank you for watching.}", font_size=30, color=WHITE).move_to(thanks_box.get_center() + UP * 0.3)
+        team = MathTex(r"\text{Tensors in AI}", font_size=20, color=HIGHLIGHT_COLOR).next_to(thanks, DOWN, buff=0.22)
 
-        ty_box = RoundedRectangle(
-            corner_radius=0.25, width=8.5, height=2.8,
-            fill_color="#050515", fill_opacity=0.92,
-            stroke_color=HIGHLIGHT_COLOR, stroke_width=1.8,
-        ).shift(DOWN * 0.3)
+        self.play(FadeIn(thanks_box, scale=0.9), run_time=T_MEDIUM)
+        self.play(FadeIn(thanks), FadeIn(team), run_time=T_MEDIUM)
+        self.wait(2.0)
 
-        ty_text = Text(
-            "Cảm ơn thầy và các bạn đã đồng hành cùng\nnhóm chúng mình trong hành trình khám phá Tensor",
-            font_size=20, color=WHITE, line_spacing=0.55,
-        ).move_to(ty_box.get_center() + UP * 0.35)
-
-        team_text = Text(
-            "Nhóm NeurIPS Tutorial – Tensors in AI",
-            font_size=16, color=HIGHLIGHT_COLOR,
-        ).next_to(ty_text, DOWN, buff=0.3)
-
-        # Decorative stars
-        stars = VGroup(*[
-            Text("✦", font_size=16, color=HIGHLIGHT_COLOR).move_to(
-                ty_box.get_center() + RIGHT * (-2.5 + i * 1.25) + DOWN * 1.1
-            )
-            for i in range(5)
-        ])
-
-        self.play(FadeIn(ty_box, scale=0.9), run_time=T_MEDIUM)
-        self.play(FadeIn(ty_text, shift=UP * 0.05), run_time=T_MEDIUM)
-        self.play(FadeIn(team_text), run_time=T_FAST)
-        self.play(
-            LaggedStart(*[GrowFromCenter(s) for s in stars], lag_ratio=0.15),
-            run_time=T_MEDIUM,
-        )
-
-        # Final glow on the box border
-        self.play(
-            ty_box.animate.set_stroke(HIGHLIGHT_COLOR, width=3.0),
-            run_time=0.5,
-        )
-        self.play(
-            ty_box.animate.set_stroke(HIGHLIGHT_COLOR, width=1.8),
-            run_time=0.5,
-        )
-
-        self.wait(2.5)
-
-        # ── Graceful fade to black ────────────────────────────────────────
-        everything = VGroup(
-            *line_mobs, grad_rects, float_particles,
-            ty_box, ty_text, team_text, stars,
-        )
-        self.play(FadeOut(everything, run_time=T_SLOW))
-        self.wait(0.5)
+        self.play(FadeOut(Group(*self.mobjects)), run_time=T_SLOW)

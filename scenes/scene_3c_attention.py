@@ -1,13 +1,8 @@
 """
 scenes/scene_3c_attention.py
-─────────────────────────────────────────────────────────────────────────────
-SCENE 3C  "Attention và Polynomial Self-Attention"  (6:30 – 7:45)
-
-- Self-attention: N×N matrix, O(N²) complexity
-- Polynomial trick → factorize QK^T → O(N)
-- Visual: maze → straight path
-─────────────────────────────────────────────────────────────────────────────
+SCENE 3C: Attention complexity from O(N^2) to O(N).
 """
+
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -15,153 +10,100 @@ from manim import *
 from config import *
 
 
+Y_TITLE = 3.40
+Y_SUB = 2.72
+Y_BODY = 0.10
+Y_NOTE = -3.30
+X_LEFT = -3.70
+X_RIGHT = 3.10
+
+
+def at(x, y):
+    return np.array([x, y, 0])
+
+
+def make_title(s):
+    return MathTex(s, font_size=32, color=HIGHLIGHT_COLOR).move_to(at(0, Y_TITLE))
+
+
+def make_sub(s, color=SUBTITLE_COLOR):
+    return MathTex(s, font_size=26, color=color).move_to(at(0, Y_SUB))
+
+
+def make_note(s, color=SUBTITLE_COLOR):
+    return MathTex(s, font_size=22, color=color).move_to(at(0, Y_NOTE))
+
+
 class PolynomialAttention(Scene):
     def construct(self):
         self.camera.background_color = BG_COLOR
 
-        # ── Standard Self-Attention ───────────────────────────────────────
-        title = Text("Standard Self-Attention", font_size=22,
-                     color=HIGHLIGHT_COLOR, weight=BOLD).to_edge(UP, buff=0.3)
+        title = make_title(r"\text{Attention Cost}")
         self.play(FadeIn(title), run_time=T_FAST)
 
-        N = 6
-        # Draw N×N attention matrix as a grid
-        cell_size = 0.45
+        sub_1 = make_sub(r"\text{Full }N\times N\text{ map}")
+        self.play(FadeIn(sub_1), run_time=T_FAST)
+
+        n = 7
+        cell = 0.38
         grid = VGroup()
-        for i in range(N):
-            for j in range(N):
-                brightness = 0.15 + 0.7 * abs(i - j) / N * \
-                             (1 if (i + j) % 3 != 0 else 0.4)
-                rect = Square(side_length=cell_size,
-                              fill_color=TENSOR_COLOR,
-                              fill_opacity=min(brightness, 0.85),
-                              stroke_color=TENSOR_EDGE_COLOR,
-                              stroke_width=0.6)
-                rect.move_to(
-                    RIGHT * (j - N / 2 + 0.5) * cell_size +
-                    UP    * (N / 2 - i - 0.5) * cell_size +
-                    LEFT  * 0.5
+        for i in range(n):
+            for j in range(n):
+                sq = Square(
+                    side_length=cell,
+                    fill_color=TENSOR_COLOR,
+                    fill_opacity=0.25 + 0.5 * abs(i - j) / n,
+                    stroke_color=TENSOR_EDGE_COLOR,
+                    stroke_width=0.6,
                 )
-                grid.add(rect)
+                sq.move_to(at(X_LEFT + (j - n / 2 + 0.5) * cell, Y_BODY + (n / 2 - i - 0.5) * cell))
+                grid.add(sq)
 
-        grid_label = Text("QKᵀ ∈ ℝᴺˣᴺ",
-                             font_size=22, color=MATH_COLOR)
-        grid_label.next_to(grid, DOWN, buff=0.15)
+        qkt = MathTex(r"QK^\top\in\mathbb{R}^{N\times N}", font_size=22, color=WHITE).move_to(at(X_LEFT, Y_BODY - 1.8))
+        old_c = MathTex(r"O(N^2)", font_size=34, color=RED_C).move_to(at(X_RIGHT, Y_BODY + 0.7))
+        old_note = MathTex(r"\text{All-to-all}", font_size=18, color=SUBTITLE_COLOR).next_to(old_c, DOWN, buff=0.18)
 
-        complexity_old = Text("O(N²)", font_size=28,
-                                 color="#ff4444").to_edge(RIGHT, buff=1.0).shift(UP * 0.3)
-        comp_note = Text("Mỗi từ nhìn mọi từ khác", font_size=16,
-                         color=SUBTITLE_COLOR).next_to(complexity_old, DOWN, buff=0.15)
+        self.play(LaggedStart(*[FadeIn(s, scale=0.85) for s in grid], lag_ratio=0.01), run_time=T_MEDIUM)
+        self.play(FadeIn(qkt), FadeIn(old_c), FadeIn(old_note), run_time=T_FAST)
 
-        self.play(
-            LaggedStart(*[FadeIn(r, scale=0.8) for r in grid], lag_ratio=0.02),
-            run_time=T_SLOW,
-        )
-        self.play(FadeIn(grid_label), FadeIn(complexity_old), FadeIn(comp_note),
-                  run_time=T_FAST)
+        std_formula = MathTex(r"QK^\top", font_size=28, color=WHITE).move_to(at(0, Y_NOTE + 0.55))
+        self.play(Write(std_formula), run_time=T_MEDIUM)
         self.wait(0.6)
 
-        # Zoom into QK^T formula
-        formula_std = Text("Attn(Q,K,V) = softmax( QKᵀ/√d ) V",
-            font_size=22, color=MATH_COLOR,
-        ).to_edge(DOWN, buff=0.5)
-        self.play(Write(formula_std), run_time=T_MEDIUM)
+        sub_2 = make_sub(r"\text{Reordered computation}", color=HIGHLIGHT_COLOR)
+        self.play(ReplacementTransform(sub_1, sub_2), run_time=T_FAST)
 
-        highlight_qkt = SurroundingRectangle(
-            formula_std[0][17:21], color=PRODUCT_NODE_COLOR, stroke_width=2, buff=0.05
-        )
-        self.play(Create(highlight_qkt), run_time=T_FAST)
-        self.wait(0.4)
+        line_vec = VGroup(*[
+            Square(side_length=cell, fill_color=MATRIX_COLOR, fill_opacity=0.85, stroke_color=MATRIX_COLOR, stroke_width=0.6)
+            for _ in range(n)
+        ]).arrange(RIGHT, buff=0.02).move_to(at(X_LEFT, Y_BODY))
 
-        self.play(FadeOut(VGroup(grid_label, formula_std, highlight_qkt, comp_note)),
-                  run_time=T_FAST)
+        self.play(ReplacementTransform(grid, line_vec), FadeOut(qkt), run_time=T_MEDIUM)
 
-        # ── Polynomial Self-Attention ─────────────────────────────────────
-        self.play(
-            title.animate.become(
-                Text("Polynomial Self-Attention", font_size=22,
-                     color=HIGHLIGHT_COLOR, weight=BOLD).to_edge(UP, buff=0.3)
-            ),
-            run_time=T_FAST,
-        )
+        new_c = MathTex(r"O(N)", font_size=34, color=GREEN_C).move_to(old_c)
+        poly_formula = MathTex(r"\phi(Q)\big(\phi(K)^\top V\big)", font_size=24, color=WHITE).move_to(std_formula)
+        idea = MathTex(r"\text{No explicit }N\times N", font_size=18, color=HIGHLIGHT_COLOR).next_to(poly_formula, UP, buff=0.18)
 
-        # Grid "collapses" into a vector (linear)
-        vec_linear = VGroup(*[
-            Square(side_length=cell_size,
-                   fill_color=MATRIX_COLOR,
-                   fill_opacity=0.8,
-                   stroke_color=MATRIX_COLOR,
-                   stroke_width=0.6).move_to(
-                       RIGHT * (-N / 2 + 0.5 + i) * cell_size + LEFT * 0.5)
-            for i in range(N)
+        self.play(ReplacementTransform(old_c, new_c), FadeOut(old_note), run_time=T_FAST)
+        self.play(ReplacementTransform(std_formula, poly_formula), FadeIn(idea), run_time=T_MEDIUM)
+
+        self.play(FadeOut(VGroup(line_vec, poly_formula, idea)), run_time=T_FAST)
+
+        maze = VMobject(color=RED_C, stroke_width=3)
+        maze.set_points_as_corners([
+            at(X_LEFT - 1.0, Y_BODY + 0.8), at(X_LEFT - 1.0, Y_BODY - 0.2), at(X_LEFT + 0.2, Y_BODY - 0.2),
+            at(X_LEFT + 0.2, Y_BODY + 0.6), at(X_LEFT + 1.3, Y_BODY + 0.6), at(X_LEFT + 1.3, Y_BODY - 0.7),
+            at(X_LEFT + 2.1, Y_BODY - 0.7),
         ])
+        straight = Line(at(X_RIGHT - 1.8, Y_BODY), at(X_RIGHT + 1.8, Y_BODY), color=GREEN_C, stroke_width=3)
+        maze_lbl = MathTex(r"O(N^2)", font_size=22, color=RED_C).next_to(maze, DOWN, buff=0.12)
+        straight_lbl = MathTex(r"O(N)", font_size=22, color=GREEN_C).next_to(straight, DOWN, buff=0.12)
 
-        self.play(
-            ReplacementTransform(grid, vec_linear),
-            run_time=T_SLOW,
-        )
-
-        # Show new complexity
-        complexity_new = Text("O(N)", font_size=28,
-                                 color="#44cc44").to_edge(RIGHT, buff=1.0).shift(UP * 0.3)
-        self.play(
-            ReplacementTransform(complexity_old, complexity_new),
-            run_time=T_MEDIUM,
-        )
-
-        formula_poly = Text("Attn*(Q,K,V) = φ(Q)( φ(K)ᵀV )",
-            font_size=22, color=MATH_COLOR,
-        ).to_edge(DOWN, buff=0.5)
-        self.play(Write(formula_poly), run_time=T_MEDIUM)
-
-        idea_note = Text(
-            "Đổi thứ tự nhân: tính K^TV trước → không cần ma trận N×N",
-            font_size=16, color=SUBTITLE_COLOR,
-        ).next_to(formula_poly, UP, buff=0.15)
-        self.play(FadeIn(idea_note), run_time=T_FAST)
-        self.wait(0.5)
-
-        # ── Complexity comparison visual ──────────────────────────────────
-        self.play(FadeOut(VGroup(vec_linear, formula_poly, idea_note, complexity_new)),
-                  run_time=T_FAST)
-
-        # Before: winding maze path
-        maze_pts_before = [
-            LEFT * 3.5 + DOWN * 1.0,
-            LEFT * 3.5 + UP * 0.5,
-            LEFT * 2.0 + UP * 0.5,
-            LEFT * 2.0 + DOWN * 0.8,
-            LEFT * 0.5 + DOWN * 0.8,
-            LEFT * 0.5 + UP * 0.3,
-            RIGHT * 1.0 + UP * 0.3,
-            RIGHT * 1.0 + DOWN * 1.0,
-            RIGHT * 2.5 + DOWN * 1.0,
-        ]
-        maze = VMobject(color="#ff4444", stroke_width=3)
-        maze.set_points_as_corners(maze_pts_before)
-
-        # After: straight line
-        straight = Line(LEFT * 3.5, RIGHT * 2.5,
-                        color="#44cc44", stroke_width=3)
-
-        maze_lbl = Text("O(N²)", font_size=22,
-                        color="#ff4444").next_to(maze, DOWN, buff=0.2)
-        straight_lbl = Text("O(N)", font_size=22,
-                            color="#44cc44").next_to(straight, DOWN, buff=0.2)
-
-        maze.shift(UP * 0.5)
-        straight.shift(DOWN * 0.8)
-        maze_lbl.shift(UP * 0.5)
-
-        self.play(Create(maze), FadeIn(maze_lbl), run_time=T_SLOW)
+        self.play(Create(maze), FadeIn(maze_lbl), run_time=T_MEDIUM)
         self.play(Create(straight), FadeIn(straight_lbl), run_time=T_MEDIUM)
 
-        result = Text("Từ O(N²) xuống O(N)  –  xử lý chuỗi dài gấp 1000 lần!",
-                      font_size=18, color=HIGHLIGHT_COLOR, weight=BOLD)
-        result.to_edge(DOWN, buff=0.35)
-        self.play(Write(result), run_time=T_MEDIUM)
-        self.wait(1.2)
+        note = make_note(r"\textbf{From }O(N^2)\textbf{ to }O(N)", color=HIGHLIGHT_COLOR)
+        self.play(FadeIn(note), run_time=T_MEDIUM)
+        self.wait(1.1)
 
-        self.play(FadeOut(VGroup(maze, straight, maze_lbl, straight_lbl,
-                                 result, title)),
-                  run_time=T_MEDIUM)
+        self.play(FadeOut(Group(*self.mobjects)), run_time=T_MEDIUM)
