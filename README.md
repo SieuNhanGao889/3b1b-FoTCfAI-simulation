@@ -112,3 +112,15 @@ media/
 * The `media/` folder can grow very large due to partial renders.
 * You can safely delete `media/videos/*/partial_movie_files/` if you only need final outputs.
 * Structure is modular: scenes are independent and reusable.
+
+┌─────────────────────────────────────────────┐
+│  ZONE TOP (y = 3.2→4.0): Title              │
+│  ZONE SUB (y = 2.5→3.2): Subtitle/step lbl  │
+├──────────────────────┬──────────────────────┤
+│  ZONE LEFT           │  ZONE RIGHT          │
+│  x = -7→-0.5         │  x = 0.5→7           │
+│  y = -2.0→2.4        │  y = -2.0→2.4        │
+│  → Tensor 3D         │  → Concept / Matrix  │
+├─────────────────────────────────────────────┤
+│  ZONE BOTTOM (y = -4.0→-2.2): Note/formula  │
+└─────────────────────────────────────────────┘

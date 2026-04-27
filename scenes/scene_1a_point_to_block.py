@@ -1,213 +1,229 @@
 """
-scenes/scene_1a_point_to_block.py
+scenes/scene_1a_point_to_block_extended.py
 ─────────────────────────────────────────────────────────────────────────────
-SCENE 1A  "From a point to a block"  (0:00 – 0:40)
+SCENE 1A: The Full Journey (Context -> The Wall -> Solution -> Point-to-Block)
+Duration: ~1:30 - 2:00
 
-Pedagogical goals (from feedback):
-  1. Show that Tensor = multidimensional array that INCLUDES scalars, vectors,
-     and matrices as special cases (rank-0, 1, 2).
-  2. Explicitly label each order/rank so learners understand the hierarchy.
-  3. Transition smoothly into the 3-D block (rank-3 tensor).
-
-Timeline:
-  0-5s   Black screen → glowing white dot (scalar, rank 0)
-  5-12s  Dot stretches into a row of 5 values (vector, rank 1)
-  12-22s Vector replicates into 4 rows → 4×5 matrix (rank 2)
-  22-35s Matrix replicates along depth → 6 slices → 4×5×6 tensor (rank 3)
-  35-40s Zoom out; X,Y,Z axis labels appear; "Tensor = multidim. array" text
-─────────────────────────────────────────────────────────────────────────────
+LAYOUT ZONES:
+  ZONE TOP    (y =  3.40) -> Main Title
+  ZONE SUB    (y =  2.72) -> Subtitle / Current Step
+  ZONE LEFT   (x = -3.70) -> Main Visuals (3D blocks, grids, dots)
+  ZONE RIGHT  (x =  3.10) -> Concepts, Lists, Taxonomy panel
+  ZONE BOTTOM (y = -3.30) -> Formulas, Indices, Notes
 """
 
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from manim import *
-from config import *
-from utils.tensor_objects import Tensor3D
-
-
-# ── helpers ──────────────────────────────────────────────────────────────────
-
-VALUES = [3, 7, 2, 9, 1]   # sample data values shown in the vector
-
-
-def make_value_dot(val: int, color=VECTOR_COLOR, font_size: int = 20):
-    dot = Circle(radius=0.22, fill_color=color, fill_opacity=0.9, stroke_width=0)
-    num = Text(str(val), font_size=font_size, color=BLACK, weight=BOLD)
-    return VGroup(dot, num)
-
-
-def make_vector_row(values, color=VECTOR_COLOR, spacing: float = 0.6):
-    row = VGroup(*[make_value_dot(v, color) for v in values])
-    row.arrange(RIGHT, buff=spacing - 0.44)
-    return row
-
-
-def rank_label(text: str, color=HIGHLIGHT_COLOR, font_size: int = 28):
-    return Text(text, font_size=font_size, color=color, weight=BOLD)
-
-
-# ── Scene ─────────────────────────────────────────────────────────────────────
 
 class PointToBlock(Scene):
-
     def construct(self):
-        self.camera.background_color = BG_COLOR
+        # ==========================================================
+        # 0. CONFIGURATION & ZONES
+        # ==========================================================
+        Z_TOP = UP * 3.40
+        Z_SUB = UP * 2.72
+        Z_LEFT = LEFT * 3.70
+        Z_RIGHT = RIGHT * 3.10
+        Z_BOTTOM = DOWN * 3.30
 
-        # ── 0-5s  Scalar (rank 0) ─────────────────────────────────────────
-        scalar_dot = Dot(ORIGIN, radius=0.18, color=WHITE)
-        scalar_dot.set_glow_factor(1.5)
-        rlabel = rank_label("Scalar  (rank 0 tensor)")
+        # Monochromatic Blue Palette & Accents
+        UCOLS = [BLUE_E, BLUE_D, BLUE_C, BLUE_B, BLUE_A]
+        C_WARN = RED_C
+        C_HL = YELLOW
+        C_SUCCESS = GREEN
 
-        self.wait(0.4)
-        self.play(GrowFromCenter(scalar_dot), run_time=T_FAST)
-        self.play(Flash(scalar_dot, color=WHITE, flash_radius=0.4, line_length=0.15),
-                  run_time=0.5)
-        rlabel.next_to(scalar_dot, DOWN, buff=0.4)
-        self.play(FadeIn(rlabel, shift=UP * 0.1), run_time=T_FAST)
-        self.wait(0.8)
+        # Main fixed title
+        title = MathTex(r"\text{The Foundation: Tensors in AI}", font_size=42).move_to(Z_TOP)
+        self.play(FadeIn(title, shift=DOWN * 0.2))
 
-        # ── 5-12s  Vector (rank 1) ────────────────────────────────────────
-        vec_row = make_vector_row(VALUES)
-        vec_row.move_to(ORIGIN)
+        # ==========================================================
+        # PHASE 1: THE CONTEXT & SCALE (Storytelling)
+        # ==========================================================
+        sub_context = MathTex(r"\text{Context: What powers the most advanced AI?}", font_size=32).move_to(Z_SUB)
+        self.play(FadeIn(sub_context))
 
-        v_label_top = rank_label("Vector  (rank-1 tensor)", color=VECTOR_COLOR)
-        v_label_top.to_edge(UP, buff=0.3)
+        # Single parameter
+        single_param = Dot(color=UCOLS[0], radius=0.1).move_to(Z_LEFT)
+        note_param = MathTex(r"\text{A single parameter = A basic unit of knowledge}", font_size=28).move_to(Z_BOTTOM)
+        
+        self.play(FadeIn(single_param), FadeIn(note_param))
+        self.wait(1)
 
-        # Scalar "stretches" into the first dot of the vector
-        self.play(
-            FadeOut(rlabel),
-            ReplacementTransform(scalar_dot, vec_row[0]),
-            run_time=T_MEDIUM,
-        )
-        self.play(
-            LaggedStart(*[GrowFromCenter(d) for d in vec_row[1:]], lag_ratio=0.18),
-            FadeIn(v_label_top, shift=DOWN * 0.1),
-            run_time=T_MEDIUM,
-        )
+        # Scale up to a massive tensor
+        matrix_base = VGroup(*[
+            VGroup(*[Dot(color=UCOLS[2], radius=0.06) for _ in range(6)]).arrange(RIGHT, buff=0.15)
+            for _ in range(6)
+        ]).arrange(DOWN, buff=0.15).move_to(Z_LEFT)
+        
+        massive_tensor = VGroup()
+        for i in range(8):
+            layer = matrix_base.copy().set_color(UCOLS[min(i, 4)])
+            layer.shift(RIGHT * 0.1 * i + UP * 0.1 * i)
+            massive_tensor.add(layer)
+        massive_tensor.move_to(Z_LEFT)
 
-        # Python index hint: vec[i]
-        idx_hint = Text("vec[i]", font="Monospace", font_size=18,
-                        color=SUBTITLE_COLOR)
-        idx_hint.next_to(vec_row, DOWN, buff=0.2)
-        self.play(FadeIn(idx_hint), run_time=T_FAST)
-        self.wait(0.6)
+        tax_scale = MathTex(r"\text{SOTA models (GPT-4, Gemini)} \\ \textbf{Trillions} \text{ of parameters.}", font_size=30).move_to(Z_RIGHT)
 
-        # ── 12-22s  Matrix (rank 2) ───────────────────────────────────────
-        rows = VGroup(*[make_vector_row(VALUES, color=MATRIX_COLOR) for _ in range(4)])
-        rows.arrange(DOWN, buff=0.18)
-        rows.move_to(ORIGIN)
+        self.play(ReplacementTransform(single_param, massive_tensor), run_time=2)
+        self.play(Write(tax_scale))
+        self.play(FadeOut(note_param))
+        self.wait(1)
 
-        m_label_top = rank_label("Matrix  (rank-2 tensor)", color=MATRIX_COLOR)
-        m_label_top.to_edge(UP, buff=0.3)
+        # ==========================================================
+        # PHASE 2: THE AI SCALING WALL
+        # ==========================================================
+        sub_wall = MathTex(r"\text{The AI Scaling Wall}", font_size=32, color=C_WARN).move_to(Z_SUB)
+        self.play(FadeOut(sub_context), FadeIn(sub_wall))
 
-        m_idx_hint = Text("mat[i, j]", font="Monospace", font_size=18,
-                          color=SUBTITLE_COLOR)
-        m_idx_hint.next_to(rows, DOWN, buff=0.2)
+        # Tensor turns red
+        massive_tensor_red = massive_tensor.copy().set_color(C_WARN)
+        self.play(ReplacementTransform(massive_tensor, massive_tensor_red), run_time=1)
 
-        self.play(
-            FadeOut(v_label_top), FadeOut(idx_hint),
-            # Transform first row into matrix row 0, then grow the rest
-            ReplacementTransform(vec_row, rows[0]),
-            run_time=T_MEDIUM,
-        )
-        self.play(
-            LaggedStart(*[FadeIn(r, shift=DOWN * 0.15) for r in rows[1:]],
-                        lag_ratio=0.25),
-            FadeIn(m_label_top, shift=DOWN * 0.1),
-            run_time=T_MEDIUM,
-        )
-        self.play(FadeIn(m_idx_hint), run_time=T_FAST)
-        self.wait(0.5)
+        # List of 3 problems
+        probs = VGroup(
+            MathTex(r"\bullet\ \text{Models too large (Memory)}", font_size=28, color=WHITE),
+            MathTex(r"\bullet\ \text{Inference too slow (Speed)}", font_size=28, color=WHITE),
+            MathTex(r"\bullet\ \text{Black-box models (Interpretability)}", font_size=28, color=WHITE)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.4).move_to(Z_RIGHT)
 
-        # ── 22-35s  Tensor rank-3 ─────────────────────────────────────────
-        # Fade the 2-D matrix, bring in the 3-D block
-        tensor_block = Tensor3D(nx=5, ny=4, nz=6,
-                                cell_size=0.32,
-                                face_color=TENSOR_COLOR,
-                                edge_color=TENSOR_EDGE_COLOR)
-        tensor_block.move_to(ORIGIN)
-
-        t_label_top = rank_label("Tensor  (rank ≥ 3)", color=TENSOR_EDGE_COLOR)
-        t_label_top.to_edge(UP, buff=0.3)
-
-        t_idx_hint = Text("tensor[i, j, k, ...]", font="Monospace", font_size=18,
-                          color=SUBTITLE_COLOR)
-        t_idx_hint.next_to(tensor_block, DOWN, buff=0.25)
-
-        self.play(
-            FadeOut(m_label_top), FadeOut(m_idx_hint),
-            FadeOut(rows),
-            run_time=T_FAST,
-        )
-        self.play(
-            FadeIn(tensor_block, shift=UP * 0.1),
-            FadeIn(t_label_top, shift=DOWN * 0.1),
-            run_time=T_SLOW,
-        )
-        self.play(FadeIn(t_idx_hint), run_time=T_FAST)
-
-        # Slow rotation effect: shift the block slightly left/right
-        self.play(tensor_block.animate.shift(LEFT * 0.15), run_time=0.8,
-                  rate_func=there_and_back)
-        self.wait(0.4)
-
-        # ── 35-40s  Axis labels + taxonomy summary ────────────────────────
-        # Move block slightly left to make room for axis labels
-        self.play(tensor_block.animate.shift(LEFT * 0.6), run_time=T_MEDIUM)
-
-        # Axis arrows (isometric directions)
-        arrow_x = Arrow(ORIGIN, RIGHT * 1.2, color=RED_B, stroke_width=3,
-                        max_tip_length_to_length_ratio=0.18)
-        arrow_y = Arrow(ORIGIN, UP * 1.2, color=GREEN_B, stroke_width=3,
-                        max_tip_length_to_length_ratio=0.18)
-        arrow_z = Arrow(ORIGIN, (LEFT + DOWN) * 0.7, color=BLUE_B, stroke_width=3,
-                        max_tip_length_to_length_ratio=0.18)
-
-        ax_origin = tensor_block.get_corner(DL) + RIGHT * 0.1 + UP * 0.05
-        for arr in [arrow_x, arrow_y, arrow_z]:
-            arr.shift(ax_origin)
-
-        lx = Text("axis 0  (rows)",   font_size=16, color=RED_B).next_to(arrow_x, RIGHT, buff=0.08)
-        ly = Text("axis 1  (cols)",   font_size=16, color=GREEN_B).next_to(arrow_y, UP, buff=0.05)
-        lz = Text("axis 2  (depth)",  font_size=16, color=BLUE_B).next_to(arrow_z, DL, buff=0.05)
-
-        self.play(
-            LaggedStart(
-                GrowArrow(arrow_x), GrowArrow(arrow_y), GrowArrow(arrow_z),
-                lag_ratio=0.3,
-            ),
-            run_time=T_MEDIUM,
-        )
-        self.play(
-            FadeIn(lx), FadeIn(ly), FadeIn(lz),
-            run_time=T_FAST,
-        )
-
-        # ── Taxonomy summary on the right ─────────────────────────────────
-        summary_lines = VGroup(
-            Text("Multidimensional array:", font_size=18, color=WHITE, weight=BOLD),
-            Text("Scalar  = rank 0  (1 number)",        font_size=15, color=SCALAR_COLOR),
-            Text("Vector  = rank 1  (list)",             font_size=15, color=VECTOR_COLOR),
-            Text("Matrix  = rank 2  (grid)",             font_size=15, color=MATRIX_COLOR),
-            Text("Tensor  = rank ≥ 3  (block…)",        font_size=15, color=TENSOR_EDGE_COLOR),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.14)
-        summary_lines.to_edge(RIGHT, buff=0.4).shift(DOWN * 0.3)
-
-        self.play(
-            FadeOut(t_label_top), FadeOut(t_idx_hint),
-            run_time=T_FAST,
-        )
-        self.play(
-            LaggedStart(*[FadeIn(l, shift=LEFT * 0.1) for l in summary_lines],
-                        lag_ratio=0.2),
-            run_time=T_SLOW,
-        )
+        self.play(FadeOut(tax_scale))
+        self.play(LaggedStart(*[FadeIn(p, shift=LEFT*0.1) for p in probs], lag_ratio=0.3))
         self.wait(1.5)
 
-        # ── Fade out ready for Scene 1B ───────────────────────────────────
+        # ==========================================================
+        # PHASE 3: THE SOLUTION (Tensor Decomposition)
+        # ==========================================================
+        sub_sol = MathTex(r"\text{The Operation: Tensor Decomposition}", font_size=32, color=C_HL).move_to(Z_SUB)
+        note_sol = MathTex(r"\text{Extract the core essence, discard redundancy.}", font_size=28).move_to(Z_BOTTOM)
+        
+        self.play(FadeOut(sub_wall), FadeIn(sub_sol), FadeOut(probs), FadeIn(note_sol))
+
+        # Decompose the red block into clean blue components
+        core_cube = Cube(side_length=0.8, fill_opacity=0.8, fill_color=UCOLS[4]).move_to(Z_LEFT)
+        f1 = Rectangle(height=0.8, width=2.0, fill_opacity=0.8, fill_color=UCOLS[2]).next_to(core_cube, LEFT, buff=0.2)
+        f2 = Rectangle(height=2.0, width=0.8, fill_opacity=0.8, fill_color=UCOLS[2]).next_to(core_cube, UP, buff=0.2)
+        decomposition_group = VGroup(f1, f2, core_cube)
+
+        eq_sol = MathTex(r"\mathcal{X} \approx \text{Core} \times \text{Factors}", font_size=36, color=C_HL).move_to(Z_RIGHT)
+
+        self.play(ReplacementTransform(massive_tensor_red, decomposition_group), run_time=2)
+        self.play(Write(eq_sol))
+        self.wait(1.5)
+
+        # ==========================================================
+        # PHASE 4: MULTIWAY STRUCTURE (2D vs 3D)
+        # ==========================================================
+        sub_why = MathTex(r"\text{Why Tensors? Preserving Multiway Structure}", font_size=32).move_to(Z_SUB)
         self.play(
-            FadeOut(VGroup(tensor_block, arrow_x, arrow_y, arrow_z,
-                           lx, ly, lz, summary_lines)),
-            run_time=T_MEDIUM,
+            FadeOut(sub_sol), FadeIn(sub_why),
+            FadeOut(decomposition_group), FadeOut(eq_sol), FadeOut(note_sol)
         )
+
+        # 2D Matrix
+        matrix_2d = Rectangle(height=1.8, width=2.5, color=UCOLS[2], fill_opacity=0.2).move_to(Z_RIGHT + UP*0.5)
+        label_2d = MathTex(r"\text{User} \times \text{Item}", font_size=26).next_to(matrix_2d, UP)
+        warn_2d = MathTex(r"\text{Loses Context/Time!}", font_size=24, color=C_WARN).next_to(matrix_2d, DOWN)
+        
+        # 3D Tensor
+        tensor_3d = VGroup(*[
+            Rectangle(height=1.8, width=2.5, color=UCOLS[4], fill_opacity=0.4).shift(UR*0.25*i)
+            for i in range(3)
+        ]).move_to(Z_LEFT + UP*0.5)
+        label_3d = MathTex(r"\text{User} \times \text{Item} \times \text{Time}", font_size=26, color=UCOLS[4]).next_to(tensor_3d, DOWN, buff=0.4)
+
+        self.play(FadeIn(matrix_2d), FadeIn(label_2d), FadeIn(warn_2d))
+        self.wait(0.5)
+        self.play(FadeIn(tensor_3d), FadeIn(label_3d))
+        
+        note_why = MathTex(r"\text{Tensors natively exploit multi-dimensional correlations.}", font_size=28, color=C_HL).move_to(Z_BOTTOM)
+        self.play(FadeIn(note_why))
+        self.wait(2)
+
+        # ==========================================================
+        # PHASE 5: THE TAXONOMY (Point to Block - Deep Dive)
+        # ==========================================================
+        sub_tax = MathTex(r"\text{Formalizing the Structure: Point to Block}", font_size=32).move_to(Z_SUB)
+        self.play(
+            FadeOut(sub_why), FadeIn(sub_tax),
+            FadeOut(matrix_2d), FadeOut(label_2d), FadeOut(warn_2d),
+            FadeOut(tensor_3d), FadeOut(label_3d), FadeOut(note_why)
+        )
+
+        # Prepare right panel placeholders
+        tax_panel = VGroup(
+            MathTex(r"\bullet\ \text{rank-0}: x \in \mathbb{R} \quad \text{(Scalar)}", font_size=28, color=UCOLS[0]),
+            MathTex(r"\bullet\ \text{rank-1}: \mathbf{v} \in \mathbb{R}^{n} \quad \text{(Vector)}", font_size=28, color=UCOLS[1]),
+            MathTex(r"\bullet\ \text{rank-2}: \mathbf{M} \in \mathbb{R}^{m \times n} \quad \text{(Matrix)}", font_size=28, color=UCOLS[2]),
+            MathTex(r"\bullet\ \text{rank-}d: \mathcal{X} \in \mathbb{R}^{n_1 \times \cdots \times n_d} \quad \text{(Tensor)}", font_size=28, color=UCOLS[4])
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.5).move_to(Z_RIGHT)
+
+        # --- STEP 5.1: SCALAR ---
+        v_scalar = Dot(color=UCOLS[0], radius=0.15).move_to(Z_LEFT)
+        note_scalar = MathTex(r"\text{A single value. No indices needed.}", font_size=28).move_to(Z_BOTTOM)
+        
+        self.play(FadeIn(v_scalar), Write(tax_panel[0]), FadeIn(note_scalar))
+        self.wait(1.5)
+
+        # --- STEP 5.2: VECTOR ---
+        v_vector = VGroup(*[Dot(color=UCOLS[1], radius=0.12) for _ in range(5)]).arrange(DOWN, buff=0.3).move_to(Z_LEFT)
+        note_vector = MathTex(r"\text{1D Array. Accessed by 1 index: } v_i", font_size=28).move_to(Z_BOTTOM)
+        
+        self.play(
+            ReplacementTransform(v_scalar, v_vector[0]),
+            LaggedStart(*[FadeIn(d, shift=DOWN*0.1) for d in v_vector[1:]], lag_ratio=0.2),
+            FadeOut(note_scalar)
+        )
+        self.play(Write(tax_panel[1]), FadeIn(note_vector))
+        self.wait(1.5)
+
+        # --- STEP 5.3: MATRIX ---
+        v_matrix = VGroup(*[
+            VGroup(*[Dot(color=UCOLS[2], radius=0.1) for _ in range(5)]).arrange(DOWN, buff=0.3)
+            for _ in range(5)
+        ]).arrange(RIGHT, buff=0.3).move_to(Z_LEFT)
+        note_matrix = MathTex(r"\text{2D Array. Accessed by 2 indices: } M_{i,j}", font_size=28).move_to(Z_BOTTOM)
+
+        self.play(
+            ReplacementTransform(v_vector, v_matrix[0]),
+            LaggedStart(*[FadeIn(col, shift=RIGHT*0.1) for col in v_matrix[1:]], lag_ratio=0.2),
+            FadeOut(note_vector)
+        )
+        self.play(Write(tax_panel[2]), FadeIn(note_matrix))
+        self.wait(1.5)
+
+        # --- STEP 5.4: TENSOR (3D+) ---
+        v_tensor = VGroup()
+        for i in range(4):
+            layer = v_matrix.copy().set_color(UCOLS[min(i+2, 4)]).set_opacity(1 - i*0.2)
+            layer.shift(UR * 0.2 * i)
+            v_tensor.add(layer)
+        v_tensor.move_to(Z_LEFT)
+        
+        note_tensor = MathTex(r"\text{Multiway Array. Accessed by } d \text{ indices: } \mathcal{X}_{i,j,k}", font_size=28, color=C_HL).move_to(Z_BOTTOM)
+
+        self.play(
+            ReplacementTransform(v_matrix, v_tensor[0]),
+            LaggedStart(*[FadeIn(layer, shift=UR*0.1) for layer in v_tensor[1:]], lag_ratio=0.3),
+            FadeOut(note_matrix)
+        )
+        self.play(Write(tax_panel[3]), FadeIn(note_tensor))
+        self.wait(1)
+
+        # --- STEP 5.5: DRAWING AXES (Modes) ---
+        axes = VGroup(
+            Arrow(start=v_tensor.get_corner(DL) + DL*0.2, end=v_tensor.get_corner(DL) + RIGHT*2.5, buff=0, color=WHITE), # Mode 2
+            Arrow(start=v_tensor.get_corner(DL) + DL*0.2, end=v_tensor.get_corner(DL) + UP*2.5, buff=0, color=WHITE),    # Mode 1
+            Arrow(start=v_tensor.get_corner(DL) + DL*0.2, end=v_tensor.get_corner(DL) + UR*2.0, buff=0, color=WHITE)     # Mode 3
+        )
+        mode_labels = VGroup(
+            MathTex(r"\text{Mode 2 } (j)", font_size=20).next_to(axes[0], RIGHT),
+            MathTex(r"\text{Mode 1 } (i)", font_size=20).next_to(axes[1], UP),
+            MathTex(r"\text{Mode 3 } (k)", font_size=20).next_to(axes[2], UR)
+        )
+
+        self.play(Create(axes), FadeIn(mode_labels))
+        self.wait(2)
+
+        # ==========================================================
+        # OUTRO / CLEANUP
+        # ==========================================================
+        self.play(FadeOut(Group(*self.mobjects)))

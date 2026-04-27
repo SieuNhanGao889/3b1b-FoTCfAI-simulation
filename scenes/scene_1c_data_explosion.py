@@ -1,178 +1,146 @@
 """
 scenes/scene_1c_data_explosion.py
 ─────────────────────────────────────────────────────────────────────────────
-SCENE 1C  "The data explosion → Low-Rank Factorization"  (1:10 – 1:30)
+SCENE 1C: Data Explosion & System Overload (1:10 - 1:30)
 
-Pedagogical goals (from feedback):
-  1. Motivate tensor decomposition via the THREE canonical ML problems:
-       (a) Models too large
-       (b) Inference too slow
-       (c) Black-box models (lack of structure / interpretability)
-  2. Show memory blow-up as block grows.
-  3. Introduce "Low-Rank Factorization" as the answer with a visual teaser.
-─────────────────────────────────────────────────────────────────────────────
+LAYOUT ZONES (Consistent with Scene 1A):
+  ZONE TOP    (y =  3.40) -> Main Title
+  ZONE SUB    (y =  2.72) -> Subtitle / Current Step
+  ZONE LEFT   (x = -3.70) -> Visuals (Expanding Tensor Cloud)
+  ZONE RIGHT  (x =  3.10) -> Concepts / Parameter Counter
+  ZONE BOTTOM (y = -3.30) -> Questions / The Magic Solution
 """
 
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from manim import *
-from config import *
-from utils.tensor_objects import Tensor3D
-
 
 class DataExplosion(Scene):
-
     def construct(self):
-        self.camera.background_color = BG_COLOR
+        # ==========================================================
+        # 0. CONFIGURATION & ZONES
+        # ==========================================================
+        Z_TOP = UP * 3.40
+        Z_SUB = UP * 2.72
+        Z_LEFT = LEFT * 3.70
+        Z_RIGHT = RIGHT * 3.10
+        Z_BOTTOM = DOWN * 3.30
 
-        # ── Three-problem motivation ──────────────────────────────────────
-        problems = VGroup(
-            DataExplosion._problem_card( 
-                "Models too large",
-                "Billions of parameters\ndon't fit on one GPU",
-                color="#ff5555",
-            ),
-            DataExplosion._problem_card( 
-                "Inference too slow",
-                "O(N²) attention over\nlong sequences",
-                color="#ffaa33",
-            ),
-            DataExplosion._problem_card( 
-                "Black-box models",
-                "No structure ⟹ no\ninterpretability",
-                color="#aaaaff",
-            )
-        ).arrange(RIGHT, buff=0.4)
-        problems.move_to(UP * 1.5)
+        COLOR_NORMAL = BLUE_C
+        COLOR_WARN = RED_A
+        COLOR_ANSWER = YELLOW_C
 
+        # Helper to create a faux 3D grid of dots
+        def create_tensor_cloud(size, dot_radius=0.06, spacing=0.2, color=COLOR_NORMAL, center_pos=ORIGIN):
+            tensor_group = VGroup()
+            for z in range(size):
+                layer = VGroup()
+                for y in range(size):
+                    row = VGroup(*[Dot(radius=dot_radius, color=color) for _ in range(size)]).arrange(RIGHT, buff=spacing)
+                    layer.add(row)
+                layer.arrange(DOWN, buff=spacing)
+                # Offset to create faux 3D depth
+                layer.shift(UR * spacing * 0.7 * z)
+                layer.set_color(interpolate_color(color, BLACK, z / (size + 1)))
+                tensor_group.add(layer)
+            return tensor_group.move_to(center_pos)
+
+        # Main fixed title
+        title = MathTex(r"\text{The Foundation: Tensors in AI}", font_size=42).move_to(Z_TOP)
+        self.play(FadeIn(title, shift=DOWN * 0.2))
+
+        # ==========================================================
+        # PHASE 1: THE DATA EXPLOSION
+        # ==========================================================
+        sub_title = MathTex(r"\text{The AI Scaling Wall: Data Explosion}", font_size=32, color=COLOR_WARN).move_to(Z_SUB)
+        self.play(FadeIn(sub_title))
+
+        # Start with a modest 3x3x3 tensor on the LEFT
+        tensor_small = create_tensor_cloud(size=3, center_pos=Z_LEFT)
+        self.play(FadeIn(tensor_small))
+
+        # Setup the exponential counter on the RIGHT
+        counter_tracker = ValueTracker(1000)
+        
+        # Redraw the counter dynamically
+        counter_label = always_redraw(
+            lambda: MathTex(
+                r"\text{Parameters: } " + f"{int(counter_tracker.get_value()):,}", 
+                font_size=36, 
+                color=WHITE if counter_tracker.get_value() < 500000 else COLOR_WARN
+            ).move_to(Z_RIGHT + UP*0.5)
+        )
+        
+        note_counter = MathTex(r"\text{Growing exponentially...}", font_size=28, color=LIGHT_GREY).next_to(counter_label, DOWN, buff=0.5)
+
+        self.play(FadeIn(counter_label), FadeIn(note_counter))
+        self.wait(0.5)
+
+        # Growth 1: 3x3x3 -> 6x6x6
+        tensor_mid = create_tensor_cloud(size=6, dot_radius=0.05, spacing=0.18, center_pos=Z_LEFT)
         self.play(
-            LaggedStart(*[FadeIn(p, shift=UP * 0.2) for p in problems],
-                        lag_ratio=0.3),
-            run_time=T_SLOW,
+            ReplacementTransform(tensor_small, tensor_mid),
+            counter_tracker.animate.set_value(100000),
+            run_time=1.5,
+            rate_func=rate_functions.smooth
+        )
+
+        # Growth 2: 6x6x6 -> 10x10x10 (Massive cloud)
+        tensor_massive = create_tensor_cloud(size=10, dot_radius=0.04, spacing=0.15, center_pos=Z_LEFT)
+        self.play(
+            ReplacementTransform(tensor_mid, tensor_massive),
+            counter_tracker.animate.set_value(1000000000), # 1 Billion
+            run_time=1.5,
+            rate_func=rate_functions.ease_in_expo
         )
         self.wait(0.5)
 
-        connector = Text("Why tensor decomposition?", font_size=24,
-                         color=HIGHLIGHT_COLOR, weight=BOLD)
-        connector.next_to(problems, DOWN, buff=0.35)
-        self.play(Write(connector), run_time=T_MEDIUM)
-        self.wait(0.6)
+        # ==========================================================
+        # PHASE 2: SYSTEM OVERLOAD (FIXED)
+        # ==========================================================
+        # BÍ QUYẾT FIX LỖI: Tạo một Text TĨNH hoàn toàn thay cho always_redraw
+        static_counter = MathTex(r"\text{Parameters: } 1,000,000,000", font_size=36, color=COLOR_WARN).move_to(Z_RIGHT + UP*0.5)
 
-        # ── ML systems need multiway structure ────────────────────────────
-        multiway = Text(
-            "ML data has multiple modes of variation.\n"
-            "Tensors preserve this multiway structure naturally.",
-            font_size=19, color=SUBTITLE_COLOR,
-            line_spacing=0.5,
-        ).next_to(connector, DOWN, buff=0.3)
-        self.play(FadeIn(multiway, shift=UP * 0.1), run_time=T_MEDIUM)
-        self.wait(0.8)
+        tensor_overload = tensor_massive.copy().set_color(COLOR_WARN)
+        warning_note = MathTex(r"\textbf{SYSTEM OVERLOAD}", font_size=32, color=COLOR_WARN).move_to(note_counter.get_center())
+        warning_flash = FullScreenRectangle(color=RED, fill_opacity=0.15)
+        
+        self.play(
+            ReplacementTransform(tensor_massive, tensor_overload),
+            ReplacementTransform(note_counter, warning_note),
+            ReplacementTransform(counter_label, static_counter), # <--- Tráo đổi sang tĩnh ở đây!
+            FadeIn(warning_flash),
+            run_time=0.5
+        )
+        
+        # Bây giờ Wiggle trên static_counter sẽ an toàn 100%
+        self.play(
+            Wiggle(static_counter, scale_value=1.1, run_time=1),
+            Wiggle(warning_note, run_time=1),
+            Wiggle(tensor_overload, run_time=1), 
+            FadeOut(warning_flash, run_time=1)
+        )
+
+        # ==========================================================
+        # PHASE 3: THE QUESTION & THE MAGIC SOLUTION
+        # ==========================================================
+        question = MathTex(r"\text{How can we compress this massive data without losing information?}", font_size=32, color=WHITE).move_to(Z_BOTTOM)
+        self.play(Write(question))
+        self.wait(1)
+
+        # The Magic Reveal
+        answer = MathTex(r"\textbf{LOW-RANK FACTORIZATION}", font_size=46, color=COLOR_ANSWER).move_to(Z_BOTTOM)
+
+        glow = answer.copy().set_stroke(COLOR_ANSWER, 10, opacity=0.5)
+        answer_group = VGroup(glow, answer)
 
         self.play(
-            FadeOut(VGroup(problems, connector, multiway)),
-            run_time=T_FAST,
+            tensor_overload.animate.set_opacity(0.15),
+            static_counter.animate.set_opacity(0.3),  # Dùng tên biến tĩnh ở đây
+            warning_note.animate.set_opacity(0.3),
+            ReplacementTransform(question, answer_group),
+            run_time=1.5
         )
+        self.play(FocusOn(answer_group))
+        self.wait(2)
 
-        # ── Memory blow-up ────────────────────────────────────────────────
-        block = Tensor3D(nx=4, ny=3, nz=5, cell_size=0.30,
-                         face_color=TENSOR_COLOR, edge_color=TENSOR_EDGE_COLOR)
-        block.move_to(ORIGIN + UP * 0.3)
-        self.play(FadeIn(block, scale=0.7), run_time=T_FAST)
-
-        # Counter
-        counter = Integer(4 * 3 * 5, font_size=36, color=VECTOR_COLOR)
-        counter_label = Text(" parameters", font_size=22, color=SUBTITLE_COLOR)
-        counter_grp = VGroup(counter, counter_label).arrange(RIGHT, buff=0.08)
-        counter_grp.to_edge(DOWN, buff=0.5)
-        self.play(FadeIn(counter_grp), run_time=T_FAST)
-
-        # Grow the block in 3 steps
-        scales = [1.5, 2.0, 2.8]
-        param_counts = [1_000, 10_000, 1_000_000]
-
-        for sc, pc in zip(scales, param_counts):
-            self.play(
-                block.animate.scale(sc / scales[scales.index(sc) - 1]
-                                    if scales.index(sc) > 0 else sc),
-                ChangeDecimalToValue(counter, pc),
-                run_time=T_MEDIUM,
-            )
-
-        # Flash warning
-        warning = Text("⚠  Memory explosion!", font_size=28,
-                       color="#ff4444", weight=BOLD)
-        warning.next_to(block, UP, buff=0.3)
-        self.play(FadeIn(warning, scale=1.2), run_time=T_FAST)
-        self.play(warning.animate.set_color(RED), run_time=0.3,
-                  rate_func=there_and_back)
-        self.wait(0.4)
-
-        self.play(
-            FadeOut(VGroup(block, counter_grp, warning)),
-            run_time=T_FAST,
-        )
-
-        # ── Low-Rank teaser ───────────────────────────────────────────────
-        big_block = Tensor3D(nx=6, ny=5, nz=7, cell_size=0.28,
-                             face_color="#334455", edge_color=TENSOR_EDGE_COLOR)
-        big_block.shift(LEFT * 2.5)
-        self.play(FadeIn(big_block, scale=0.6), run_time=T_FAST)
-
-        # Three thin factor "sticks"
-        vec_a = Rectangle(width=0.3, height=1.6,
-                          fill_color=VECTOR_COLOR, fill_opacity=0.85,
-                          stroke_width=0)
-        vec_b = Rectangle(width=1.6, height=0.3,
-                          fill_color=MATRIX_COLOR, fill_opacity=0.85,
-                          stroke_width=0)
-        vec_c = Rectangle(width=0.3, height=0.9,
-                          fill_color=TENSOR_EDGE_COLOR, fill_opacity=0.85,
-                          stroke_width=0)
-        factors = VGroup(vec_a, vec_b, vec_c).arrange(RIGHT, buff=0.3)
-        factors.shift(RIGHT * 1.8)
-
-        arrow = Arrow(big_block.get_right(), factors.get_left(),
-                      color=HIGHLIGHT_COLOR, stroke_width=3,
-                      max_tip_length_to_length_ratio=0.2)
-        approx = Text("≈", font_size=34,
-                         color=MATH_COLOR).next_to(big_block, RIGHT, buff=0.15)
-
-        self.play(GrowArrow(arrow), FadeIn(approx), run_time=T_FAST)
-        self.play(
-            LaggedStart(*[GrowFromCenter(f) for f in factors], lag_ratio=0.3),
-            run_time=T_MEDIUM,
-        )
-
-        # Final reveal text
-        answer = Text("LOW-RANK FACTORIZATION", font_size=30,
-                      color=HIGHLIGHT_COLOR, weight=BOLD)
-        answer.to_edge(DOWN, buff=0.5)
-        self.play(Write(answer), run_time=T_MEDIUM)
-
-        sub = Text(
-            "Compress the block into a few small factors –\n"
-            "preserving the essential structure.",
-            font_size=18, color=SUBTITLE_COLOR, line_spacing=0.45,
-        ).next_to(answer, UP, buff=0.2)
-        self.play(FadeIn(sub, shift=UP * 0.1), run_time=T_FAST)
-        self.wait(1.8)
-
-        self.play(FadeOut(VGroup(big_block, arrow, approx, factors, answer, sub)),
-                  run_time=T_MEDIUM)
-
-    # ── helpers ──────────────────────────────────────────────────────────────
-
-    @staticmethod
-    def _problem_card(title: str, body: str, color: str) -> VGroup:
-        bg = RoundedRectangle(
-            corner_radius=0.15,
-            width=3.0, height=2.2,
-            fill_color=color, fill_opacity=0.15,
-            stroke_color=color, stroke_width=1.5,
-        )
-        t = Text(title, font_size=17, color=color, weight=BOLD)
-        b = Text(body, font_size=14, color=SUBTITLE_COLOR, line_spacing=0.4)
-        t.next_to(bg.get_top(), DOWN, buff=0.2)
-        b.move_to(bg).shift(DOWN * 0.15)
-        return VGroup(bg, t, b)
+        # Cleanup
+        self.play(FadeOut(Group(*self.mobjects)))
