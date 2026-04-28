@@ -27,7 +27,7 @@ class PointToBlock(Scene):
 
         # Monochromatic Blue Palette & Accents
         UCOLS = [BLUE_E, BLUE_D, BLUE_C, BLUE_B, BLUE_A]
-        C_WARN = RED_C
+        C_WARN = [RED_E, RED_D, RED_C, RED_B, RED_A]
         C_HL = YELLOW
         C_SUCCESS = GREEN
 
@@ -48,22 +48,44 @@ class PointToBlock(Scene):
         self.play(FadeIn(single_param), FadeIn(note_param))
         self.wait(1)
 
-        # Scale up to a massive tensor
-        matrix_base = VGroup(*[
-            VGroup(*[Dot(color=UCOLS[2], radius=0.06) for _ in range(6)]).arrange(RIGHT, buff=0.15)
-            for _ in range(6)
-        ]).arrange(DOWN, buff=0.15).move_to(Z_LEFT)
-        
-        massive_tensor = VGroup()
-        for i in range(8):
-            layer = matrix_base.copy().set_color(UCOLS[min(i, 4)])
-            layer.shift(RIGHT * 0.1 * i + UP * 0.1 * i)
-            massive_tensor.add(layer)
-        massive_tensor.move_to(Z_LEFT)
+       # 1. Configuration for size 8
+        side_dim = 8
+        spacing = 0.14 # Slightly tighter spacing for a bigger cube
+        depth_ratio = 0.5 # Keeps it looking like a cube, not a long prism
 
+        # Create the 8x8 base matrix
+        matrix_base = VGroup(*[
+            VGroup(*[Dot(radius=0.05) for _ in range(side_dim)]).arrange(RIGHT, buff=spacing)
+            for _ in range(side_dim)
+        ]).arrange(DOWN, buff=spacing).move_to(Z_LEFT)
+
+        massive_tensor = VGroup()
+        for i in range(side_dim):
+            layer = matrix_base.copy()
+            
+            # Calculate the gradient: i=0 is front, i=7 is back
+            # interpolate_color goes from Start to End based on a 0-1 alpha
+            layer_color = interpolate_color(UCOLS[0], UCOLS[4], i / (side_dim - 1))
+            layer.set_color(layer_color)
+            
+            # Solid layers (no transparency)
+            layer.set_opacity(1.0)
+            
+            # Consistent 3D shift
+            layer.shift(RIGHT * (spacing * depth_ratio) * i + UP * (spacing * depth_ratio) * i)
+            massive_tensor.add(layer)
+
+        # Reverse so the back layers are drawn first and the front is on top
+        massive_tensor.submobjects.reverse()
+        massive_tensor.move_to(Z_LEFT)
+        
         tax_scale = MathTex(r"\text{SOTA models (GPT-4, Gemini)} \\ \textbf{Trillions} \text{ of parameters.}", font_size=30).move_to(Z_RIGHT)
 
-        self.play(ReplacementTransform(single_param, massive_tensor), run_time=2)
+        self.play(
+            FadeOut(single_param),
+            LaggedStart(*[FadeIn(layer, shift=UR*0.1) for layer in massive_tensor], lag_ratio=0.05),
+            run_time=2
+        )
         self.play(Write(tax_scale))
         self.play(FadeOut(note_param))
         self.wait(1)
@@ -71,11 +93,16 @@ class PointToBlock(Scene):
         # ==========================================================
         # PHASE 2: THE AI SCALING WALL
         # ==========================================================
-        sub_wall = MathTex(r"\text{The AI Scaling Wall}", font_size=32, color=C_WARN).move_to(Z_SUB)
+        sub_wall = MathTex(r"\text{The AI Scaling Wall}", font_size=32, color=C_WARN[2]).move_to(Z_SUB)
         self.play(FadeOut(sub_context), FadeIn(sub_wall))
 
         # Tensor turns red
-        massive_tensor_red = massive_tensor.copy().set_color(C_WARN)
+        massive_tensor_red = massive_tensor.copy()
+        # We iterate through the layers (sub-VGroups) to apply the warning gradient
+        for i, layer in enumerate(massive_tensor_red):
+            # Use the same interpolation logic as your original blue cube
+            new_color = interpolate_color(C_WARN[4], C_WARN[0], i / (side_dim - 1))
+            layer.set_color(new_color)
         self.play(ReplacementTransform(massive_tensor, massive_tensor_red), run_time=1)
 
         # List of 3 problems
@@ -121,7 +148,7 @@ class PointToBlock(Scene):
         # 2D Matrix
         matrix_2d = Rectangle(height=1.8, width=2.5, color=UCOLS[2], fill_opacity=0.2).move_to(Z_RIGHT + UP*0.5)
         label_2d = MathTex(r"\text{User} \times \text{Item}", font_size=26).next_to(matrix_2d, UP)
-        warn_2d = MathTex(r"\text{Loses Context/Time!}", font_size=24, color=C_WARN).next_to(matrix_2d, DOWN)
+        warn_2d = MathTex(r"\text{Loses Context/Time!}", font_size=24, color=C_WARN[2]).next_to(matrix_2d, DOWN)
         
         # 3D Tensor
         tensor_3d = VGroup(*[
